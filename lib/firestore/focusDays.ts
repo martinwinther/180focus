@@ -79,23 +79,35 @@ export async function createFocusDaysForPlan(
 
 /**
  * Retrieves a Focus Day document for a specific date.
+ * @param planId - The ID of the plan
+ * @param date - The date string (YYYY-MM-DD format)
+ * @param userId - The ID of the user (required for security rules)
  */
 export async function getFocusDayForDate(
   planId: string,
-  date: string
+  date: string,
+  userId: string
 ): Promise<FocusDay | null> {
-  const db = await getFirebaseFirestore();
-  const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
-  const dayDocRef = doc(planRef, DAYS_SUBCOLLECTION, date);
-  
   try {
-    const { getDoc } = await import('firebase/firestore');
-    const dayDoc = await getDoc(dayDocRef);
+    const db = await getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
+    const daysCollectionRef = collection(planRef, DAYS_SUBCOLLECTION);
     
-    if (!dayDoc.exists()) {
+    // Use query with userId filter to satisfy security rules
+    const q = query(
+      daysCollectionRef,
+      where('userId', '==', userId),
+      where('date', '==', date)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
       return null;
     }
     
+    // Should only have one document matching date
+    const dayDoc = querySnapshot.docs[0];
     return {
       id: dayDoc.id,
       ...dayDoc.data(),

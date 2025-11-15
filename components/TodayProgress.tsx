@@ -26,7 +26,7 @@ export function TodayProgress({
     async function fetchProgress() {
       setLoading(true);
       try {
-        const logs = await getSessionLogsForDay(planId, focusDay.id || focusDay.date);
+        const logs = await getSessionLogsForDay(userId, planId, focusDay.id || focusDay.date);
         const dailySummary = buildDailySummary(focusDay, logs);
         setSummary(dailySummary);
       } catch (error) {

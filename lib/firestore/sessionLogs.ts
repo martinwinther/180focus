@@ -101,8 +101,12 @@ export async function logCompletedWorkSegment(
 /**
  * Retrieves all session logs for a specific Focus Day.
  * Returns logs ordered by segment index.
+ * @param userId - The ID of the user (required for security rules)
+ * @param planId - The ID of the plan
+ * @param dayId - The ID of the day
  */
 export async function getSessionLogsForDay(
+  userId: string,
   planId: string,
   dayId: string
 ): Promise<SessionLog[]> {
@@ -111,7 +115,12 @@ export async function getSessionLogsForDay(
   const dayRef = doc(planRef, DAYS_SUBCOLLECTION, dayId);
   const sessionLogsRef = collection(dayRef, SESSION_LOGS_SUBCOLLECTION);
 
-  const q = query(sessionLogsRef, orderBy('segmentIndex', 'asc'));
+  // Use query with userId filter to satisfy security rules
+  const q = query(
+    sessionLogsRef,
+    where('userId', '==', userId),
+    orderBy('segmentIndex', 'asc')
+  );
 
   try {
     const querySnapshot = await getDocs(q);
@@ -185,10 +194,11 @@ export async function getWorkSessionLogsForUser(
  * Calculates total work minutes completed for a specific day.
  */
 export async function getTotalWorkMinutesForDay(
+  userId: string,
   planId: string,
   dayId: string
 ): Promise<number> {
-  const logs = await getSessionLogsForDay(planId, dayId);
+  const logs = await getSessionLogsForDay(userId, planId, dayId);
   const workLogs = logs.filter((log) => log.segmentType === 'work');
 
   const totalSeconds = workLogs.reduce((sum, log) => sum + log.actualSeconds, 0);

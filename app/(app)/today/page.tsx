@@ -65,7 +65,7 @@ export default function TodayPage() {
         setCompletedPlan(null);
         
         const today = new Date().toISOString().split('T')[0];
-        const dayData = await getFocusDayForDate(existingPlan.id!, today);
+        const dayData = await getFocusDayForDate(existingPlan.id!, today, user.uid);
         setTodayDay(dayData);
         
         if (!dayData) {

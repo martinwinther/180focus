@@ -77,7 +77,7 @@ export function PomodoroTimer({
       }
 
       try {
-        const existingLogs = await getSessionLogsForDay(planId, dayId);
+        const existingLogs = await getSessionLogsForDay(userId, planId, dayId);
         const loggedIndices = new Set(existingLogs.map((log) => log.segmentIndex));
         setLoggedSegmentIndices(loggedIndices);
       } catch (error) {

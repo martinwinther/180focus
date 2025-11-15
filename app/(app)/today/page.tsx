@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -28,7 +28,7 @@ export default function TodayPage() {
   const [error, setError] = useState<string>('');
   const [progressKey, setProgressKey] = useState(0);
 
-  const loadPlan = async () => {
+  const loadPlan = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -53,7 +53,6 @@ export default function TodayPage() {
             setCompletedPlan(completedPlanData);
             setPlan(null);
             setPausedPlan(null);
-            clearPlanConfig();
             setLoading(false);
             return;
           }
@@ -97,11 +96,11 @@ export default function TodayPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     loadPlan();
-  }, [user]);
+  }, [loadPlan]);
 
   useEffect(() => {
     if (!todayDay) return;

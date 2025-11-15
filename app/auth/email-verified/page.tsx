@@ -23,6 +23,7 @@ export default function EmailVerifiedPage() {
     }
 
     let isMounted = true;
+    let redirectTimeout: NodeJS.Timeout;
 
     async function checkUser() {
       try {
@@ -63,8 +64,26 @@ export default function EmailVerifiedPage() {
             return;
           }
         }
+
+        // If user is not logged in, auto-redirect to sign-in after a brief moment
+        // This streamlines the flow since Firebase already showed the verification message
+        if (!user) {
+          setAutoRedirected(true);
+          redirectTimeout = setTimeout(() => {
+            if (isMounted) {
+              router.replace('/auth/signin');
+            }
+          }, 1500); // Brief delay to show the message
+        }
       } catch (err) {
         console.error('Error reloading user after email verification:', err);
+        // On error, still redirect to sign-in after a brief delay
+        setAutoRedirected(true);
+        redirectTimeout = setTimeout(() => {
+          if (isMounted) {
+            router.replace('/auth/signin');
+          }
+        }, 1500);
       } finally {
         if (isMounted) setChecking(false);
       }
@@ -74,6 +93,9 @@ export default function EmailVerifiedPage() {
 
     return () => {
       isMounted = false;
+      if (redirectTimeout) {
+        clearTimeout(redirectTimeout);
+      }
     };
   }, [router, isClient]);
 
@@ -100,10 +122,12 @@ export default function EmailVerifiedPage() {
 
         <h1 className="mb-2 text-2xl font-bold text-white">Email verified</h1>
         <p className="mb-6 text-sm text-white/80">
-          Your email is verified. You can now sign in and start your focus plan.
+          {autoRedirected
+            ? 'Redirecting you...'
+            : 'Your email is verified. You can now sign in and start your focus plan.'}
         </p>
 
-        {!autoRedirected && (
+        {!autoRedirected && !checking && (
           <div className="space-y-2">
             <Button
               fullWidth
@@ -117,6 +141,12 @@ export default function EmailVerifiedPage() {
         {checking && (
           <p className="mt-4 text-xs text-white/60">
             Checking your verification status…
+          </p>
+        )}
+
+        {autoRedirected && !checking && (
+          <p className="mt-4 text-xs text-white/60">
+            Taking you to sign in...
           </p>
         )}
       </GlassCard>

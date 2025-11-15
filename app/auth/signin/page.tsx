@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getActiveFocusPlanForUser } from '@/lib/firestore/focusPlans';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -22,13 +21,15 @@ export default function SignInPage() {
     setNeedsVerification(false);
 
     try {
-      // Dynamically import Firebase to avoid SSR issues
+      // Dynamically import Firebase and Firestore to avoid SSR issues
       const [
         { signInWithEmailAndPassword },
         { getFirebaseAuth },
+        { getActiveFocusPlanForUser },
       ] = await Promise.all([
         import('firebase/auth'),
         import('@/lib/firebase/client'),
+        import('@/lib/firestore/focusPlans'),
       ]);
 
       const auth = await getFirebaseAuth();

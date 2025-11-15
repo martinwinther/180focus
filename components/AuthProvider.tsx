@@ -29,24 +29,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    let unsubscribe: (() => void) | undefined;
+
     // Dynamically import Firebase to avoid SSR issues
     Promise.all([
       import('firebase/auth'),
       import('@/lib/firebase/client'),
     ])
-      .then(([{ onAuthStateChanged, signOut: firebaseSignOut }, { getFirebaseAuth }]) => {
+      .then(([{ onAuthStateChanged }, { getFirebaseAuth }]) => {
         try {
           const auth = getFirebaseAuth();
-          const unsubscribe = onAuthStateChanged(auth, (user) => {
+          unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);
           });
-
-          // Store signOut function for later use
-          (window as any).__firebaseSignOut = firebaseSignOut;
-          (window as any).__getFirebaseAuth = getFirebaseAuth;
-
-          return () => unsubscribe();
         } catch (error) {
           console.error('Error initializing Firebase Auth:', error);
           setLoading(false);
@@ -56,6 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Error loading Firebase modules:', error);
         setLoading(false);
       });
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const signOut = async () => {

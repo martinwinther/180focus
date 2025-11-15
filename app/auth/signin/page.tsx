@@ -7,7 +7,7 @@ import {
   signInWithEmailAndPassword,
   sendEmailVerification,
 } from 'firebase/auth';
-import { firebaseAuth } from '@/lib/firebase/client';
+import { getFirebaseAuth } from '@/lib/firebase/client';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -26,8 +26,9 @@ export default function SignInPage() {
     setNeedsVerification(false);
 
     try {
+      const auth = getFirebaseAuth();
       const userCredential = await signInWithEmailAndPassword(
-        firebaseAuth,
+        auth,
         email,
         password
       );
@@ -50,13 +51,14 @@ export default function SignInPage() {
   };
 
   const handleResendVerification = async () => {
-    if (!firebaseAuth.currentUser) return;
+    const auth = getFirebaseAuth();
+    if (!auth.currentUser) return;
 
     setResendLoading(true);
     setResendSuccess(false);
 
     try {
-      await sendEmailVerification(firebaseAuth.currentUser);
+      await sendEmailVerification(auth.currentUser);
       setResendSuccess(true);
     } catch (err: unknown) {
       if (err instanceof Error) {

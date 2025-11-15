@@ -9,7 +9,7 @@ import {
   Timestamp,
   serverTimestamp,
 } from 'firebase/firestore';
-import { firebaseFirestore } from '@/lib/firebase/client';
+import { getFirebaseFirestore } from '@/lib/firebase/client';
 
 const FOCUS_PLANS_COLLECTION = 'focusPlans';
 const DAYS_SUBCOLLECTION = 'days';
@@ -72,7 +72,8 @@ export async function logCompletedWorkSegment(
       throw new Error('Invalid time values');
     }
 
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const dayRef = doc(planRef, DAYS_SUBCOLLECTION, dayId);
     const sessionLogsRef = collection(dayRef, SESSION_LOGS_SUBCOLLECTION);
 
@@ -105,7 +106,8 @@ export async function getSessionLogsForDay(
   planId: string,
   dayId: string
 ): Promise<SessionLog[]> {
-  const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+  const db = getFirebaseFirestore();
+  const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
   const dayRef = doc(planRef, DAYS_SUBCOLLECTION, dayId);
   const sessionLogsRef = collection(dayRef, SESSION_LOGS_SUBCOLLECTION);
 
@@ -138,7 +140,8 @@ export async function getWorkSessionLogsForUser(
   planId: string,
   limit?: number
 ): Promise<SessionLog[]> {
-  const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+  const db = getFirebaseFirestore();
+  const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
   const daysRef = collection(planRef, DAYS_SUBCOLLECTION);
 
   try {

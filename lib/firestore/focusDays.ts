@@ -9,7 +9,7 @@ import {
   getDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { firebaseFirestore } from '@/lib/firebase/client';
+import { getFirebaseFirestore } from '@/lib/firebase/client';
 import type { FocusDay } from '@/lib/types/focusPlan';
 import type { FocusDayPlan } from '@/lib/focus/ramp';
 
@@ -32,14 +32,15 @@ export async function createFocusDaysForPlan(
   }
   
   try {
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const daysCollectionRef = collection(planRef, DAYS_SUBCOLLECTION);
     
     // Firestore batch writes support up to 500 operations per batch
     const BATCH_SIZE = 500;
     
     for (let i = 0; i < dayPlans.length; i += BATCH_SIZE) {
-      const batch = writeBatch(firebaseFirestore);
+      const batch = writeBatch(db);
       const batchDays = dayPlans.slice(i, i + BATCH_SIZE);
       
       for (const dayPlan of batchDays) {
@@ -83,7 +84,8 @@ export async function getFocusDayForDate(
   planId: string,
   date: string
 ): Promise<FocusDay | null> {
-  const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+  const db = getFirebaseFirestore();
+  const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
   const dayDocRef = doc(planRef, DAYS_SUBCOLLECTION, date);
   
   try {
@@ -109,7 +111,8 @@ export async function getFocusDayForDate(
  */
 export async function getAllFocusDaysForPlan(planId: string): Promise<FocusDay[]> {
   try {
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const daysCollectionRef = collection(planRef, DAYS_SUBCOLLECTION);
     
     const q = query(daysCollectionRef);
@@ -145,8 +148,9 @@ export async function getAllFocusDaysForPlan(planId: string): Promise<FocusDay[]
  */
 export async function getNextTrainingDay(planId: string): Promise<FocusDay | null> {
   try {
+    const db = getFirebaseFirestore();
     const today = new Date().toISOString().split('T')[0];
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const daysCollectionRef = collection(planRef, DAYS_SUBCOLLECTION);
     
     const q = query(
@@ -198,7 +202,8 @@ export async function markDayCompleted(
   dayId: string
 ): Promise<void> {
   try {
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const dayDocRef = doc(planRef, DAYS_SUBCOLLECTION, dayId);
     
     // Verify the day exists and belongs to the user

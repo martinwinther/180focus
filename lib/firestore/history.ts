@@ -6,7 +6,7 @@ import {
   where,
   orderBy,
 } from 'firebase/firestore';
-import { firebaseFirestore } from '@/lib/firebase/client';
+import { getFirebaseFirestore } from '@/lib/firebase/client';
 import type { FocusDay } from '@/lib/types/focusPlan';
 import type { SessionLog } from './sessionLogs';
 import { buildDailySummary, type DailySummary } from '@/lib/focus/history';
@@ -24,7 +24,8 @@ export async function getFocusDaysForPlan(
   planId: string
 ): Promise<FocusDay[]> {
   try {
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const daysCollectionRef = collection(planRef, DAYS_SUBCOLLECTION);
 
     const q = query(daysCollectionRef, where('userId', '==', userId));
@@ -64,7 +65,8 @@ export async function getSessionLogsForDay(
   planId: string,
   dayId: string
 ): Promise<SessionLog[]> {
-  const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+  const db = getFirebaseFirestore();
+  const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
   const dayRef = doc(planRef, DAYS_SUBCOLLECTION, dayId);
   const sessionLogsRef = collection(dayRef, SESSION_LOGS_SUBCOLLECTION);
 

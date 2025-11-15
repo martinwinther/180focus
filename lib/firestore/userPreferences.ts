@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { firebaseFirestore } from '../firebase/client';
+import { getFirebaseFirestore } from '../firebase/client';
 
 export interface UserPreferences {
   soundEnabled: boolean;
@@ -17,7 +17,8 @@ const defaultPreferences: Omit<UserPreferences, 'userId' | 'createdAt' | 'update
 };
 
 export async function getUserPreferences(userId: string): Promise<UserPreferences> {
-  const prefsRef = doc(firebaseFirestore, 'userPreferences', userId);
+  const db = getFirebaseFirestore();
+  const prefsRef = doc(db, 'userPreferences', userId);
   const prefsSnap = await getDoc(prefsRef);
 
   if (prefsSnap.exists()) {
@@ -51,7 +52,8 @@ export async function updateUserPreferences(
   userId: string,
   updates: Partial<Omit<UserPreferences, 'userId' | 'createdAt' | 'updatedAt'>>
 ): Promise<void> {
-  const prefsRef = doc(firebaseFirestore, 'userPreferences', userId);
+  const db = getFirebaseFirestore();
+  const prefsRef = doc(db, 'userPreferences', userId);
   
   await updateDoc(prefsRef, {
     ...updates,

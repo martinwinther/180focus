@@ -11,7 +11,7 @@ import {
   Timestamp,
   serverTimestamp,
 } from 'firebase/firestore';
-import { firebaseFirestore } from '@/lib/firebase/client';
+import { getFirebaseFirestore } from '@/lib/firebase/client';
 import type { FocusPlan, FocusPlanConfig, FocusPlanStatus } from '@/lib/types/focusPlan';
 import { generateFocusDayPlans, RampValidationError, NoTrainingDaysError } from '@/lib/focus/ramp';
 import type { TrainingDayOfWeek } from '@/lib/focus/ramp';
@@ -71,8 +71,9 @@ export async function createFocusPlan(
     }
 
     // Create the plan document
+    const db = getFirebaseFirestore();
     const docRef = await addDoc(
-      collection(firebaseFirestore, FOCUS_PLANS_COLLECTION),
+      collection(db, FOCUS_PLANS_COLLECTION),
       {
         ...planData,
         createdAt: serverTimestamp(),
@@ -88,7 +89,8 @@ export async function createFocusPlan(
     } catch (error) {
       console.error('Error creating focus days:', error);
       // Mark plan as broken so user knows there's an issue
-      await updateDoc(doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId), {
+      const db = getFirebaseFirestore();
+      await updateDoc(doc(db, FOCUS_PLANS_COLLECTION, planId), {
         status: 'archived',
         updatedAt: serverTimestamp(),
       });
@@ -122,8 +124,9 @@ export async function getActiveFocusPlanForUser(
   userId: string
 ): Promise<FocusPlan | null> {
   try {
+    const db = getFirebaseFirestore();
     const q = query(
-      collection(firebaseFirestore, FOCUS_PLANS_COLLECTION),
+      collection(db, FOCUS_PLANS_COLLECTION),
       where('userId', '==', userId),
       where('status', '==', 'active'),
       orderBy('createdAt', 'desc'),
@@ -159,8 +162,9 @@ export async function getAllPlansForUser(
   userId: string
 ): Promise<FocusPlan[]> {
   try {
+    const db = getFirebaseFirestore();
     const q = query(
-      collection(firebaseFirestore, FOCUS_PLANS_COLLECTION),
+      collection(db, FOCUS_PLANS_COLLECTION),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
@@ -193,7 +197,8 @@ export async function setFocusPlanStatus(
   status: FocusPlanStatus
 ): Promise<void> {
   try {
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     
     const updateData: Record<string, unknown> = {
       status,
@@ -259,7 +264,8 @@ export async function createNewActivePlanForUser(
 
 export async function pauseFocusPlan(userId: string, planId: string): Promise<void> {
   try {
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     
     await updateDoc(planRef, {
       status: 'paused',
@@ -283,7 +289,8 @@ export async function resumeFocusPlan(userId: string, planId: string): Promise<v
       );
     }
     
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     
     await updateDoc(planRef, {
       status: 'active',

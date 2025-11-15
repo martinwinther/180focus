@@ -7,7 +7,7 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
 } from 'firebase/auth';
-import { firebaseAuth } from '@/lib/firebase/client';
+import { getFirebaseAuth } from '@/lib/firebase/client';
 import { usePlanConfig } from '@/lib/hooks/usePlanConfig';
 import { createNewActivePlanForUser } from '@/lib/firestore/focusPlans';
 
@@ -26,8 +26,9 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
+      const auth = getFirebaseAuth();
       const userCredential = await createUserWithEmailAndPassword(
-        firebaseAuth,
+        auth,
         email,
         password
       );

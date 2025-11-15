@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   getDoc,
 } from 'firebase/firestore';
-import { firebaseFirestore } from '@/lib/firebase/client';
+import { getFirebaseFirestore } from '@/lib/firebase/client';
 import type { FocusPlan } from '@/lib/types/focusPlan';
 import type { FocusDay } from '@/lib/types/focusPlan';
 import type { TrainingDayOfWeek, FocusDayPlan } from './ramp';
@@ -41,7 +41,8 @@ export async function updateTrainingDaysPerWeekForFuture(
     }
 
     // Fetch the plan and verify ownership
-    const planRef = doc(firebaseFirestore, FOCUS_PLANS_COLLECTION, planId);
+    const db = getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const planDoc = await getDoc(planRef);
 
     if (!planDoc.exists()) {
@@ -160,7 +161,8 @@ export async function updateTrainingDaysPerWeekForFuture(
     }));
 
     // Delete old future days and write new ones in batches
-    const batch = writeBatch(firebaseFirestore);
+    const db = getFirebaseFirestore();
+    const batch = writeBatch(db);
 
     // Delete old future days
     for (const futureDay of futureDays) {

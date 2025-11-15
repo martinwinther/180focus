@@ -12,7 +12,7 @@ export default function TodayPage() {
         {/* Daily Target */}
         <div className="mb-8 text-center">
           <div className="mb-2 text-sm font-medium uppercase tracking-wider text-white/60">
-            Today's target
+            Today&apos;s target
           </div>
           <div className="text-6xl font-bold text-white">25</div>
           <div className="text-lg text-white/80">minutes</div>
@@ -34,7 +34,7 @@ export default function TodayPage() {
 
         {/* Session Breakdown */}
         <div className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-white">Today's sessions</h2>
+          <h2 className="mb-4 text-lg font-semibold text-white">Today&apos;s sessions</h2>
           <div className="space-y-2">
             <div className="flex items-center gap-3 rounded-xl bg-white/10 p-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary-light">

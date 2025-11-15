@@ -27,6 +27,7 @@ interface ValidationErrors {
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, loading: authLoading, isVerified } = useAuth();
+  const [isClient, setIsClient] = useState(false);
 
   const [targetDailyMinutes, setTargetDailyMinutes] = useState(180);
   const [configMode, setConfigMode] = useState<ConfigMode>('endDate');
@@ -40,16 +41,26 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        // Not authenticated, redirect to signup
-        router.push('/auth/signup');
-      } else if (!isVerified) {
-        // Not verified, redirect to signin
-        router.push('/auth/signin');
-      }
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // Only redirect on client side after auth has finished loading to avoid SSR issues
+    if (!isClient || typeof window === 'undefined') return;
+    if (authLoading) return;
+
+    if (!user) {
+      // Not authenticated, redirect to signup
+      router.push('/auth/signup');
+      return;
     }
-  }, [user, authLoading, isVerified, router]);
+
+    if (!isVerified) {
+      // Not verified, redirect to signin
+      router.push('/auth/signin');
+      return;
+    }
+  }, [isClient, user, authLoading, isVerified, router]);
 
   const toggleTrainingDay = (day: string) => {
     if (trainingDaysPerWeek.includes(day)) {
@@ -159,12 +170,14 @@ export default function OnboardingPage() {
     return tomorrow.toISOString().split('T')[0];
   };
 
-  if (authLoading) {
+  // Wait for client-side hydration before rendering anything
+  if (!isClient || authLoading) {
     return <LoadingSpinner message="Loading..." />;
   }
 
+  // Don't render anything while redirecting (prevents flash of content)
   if (!user || !isVerified) {
-    return null;
+    return <LoadingSpinner message="Redirecting..." />;
   }
 
   return (

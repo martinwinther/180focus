@@ -7,7 +7,7 @@ import { useAuth } from '@/components/AuthProvider';
 
 export default function LandingPage() {
   const { user } = useAuth();
-  const ctaHref = user ? '/today' : '/onboarding';
+  const ctaHref = user ? '/today' : '/auth/signup';
   const ctaText = user ? 'Go to today' : 'Get started';
 
   return (

@@ -71,7 +71,7 @@ export async function createFocusPlan(
     }
 
     // Create the plan document
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const docRef = await addDoc(
       collection(db, FOCUS_PLANS_COLLECTION),
       {
@@ -89,7 +89,7 @@ export async function createFocusPlan(
     } catch (error) {
       console.error('Error creating focus days:', error);
       // Mark plan as broken so user knows there's an issue
-      const db = getFirebaseFirestore();
+      const db = await getFirebaseFirestore();
       await updateDoc(doc(db, FOCUS_PLANS_COLLECTION, planId), {
         status: 'archived',
         updatedAt: serverTimestamp(),
@@ -124,7 +124,7 @@ export async function getActiveFocusPlanForUser(
   userId: string
 ): Promise<FocusPlan | null> {
   try {
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const q = query(
       collection(db, FOCUS_PLANS_COLLECTION),
       where('userId', '==', userId),
@@ -162,7 +162,7 @@ export async function getAllPlansForUser(
   userId: string
 ): Promise<FocusPlan[]> {
   try {
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const q = query(
       collection(db, FOCUS_PLANS_COLLECTION),
       where('userId', '==', userId),
@@ -197,7 +197,7 @@ export async function setFocusPlanStatus(
   status: FocusPlanStatus
 ): Promise<void> {
   try {
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     
     const updateData: Record<string, unknown> = {
@@ -264,7 +264,7 @@ export async function createNewActivePlanForUser(
 
 export async function pauseFocusPlan(userId: string, planId: string): Promise<void> {
   try {
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     
     await updateDoc(planRef, {
@@ -289,7 +289,7 @@ export async function resumeFocusPlan(userId: string, planId: string): Promise<v
       );
     }
     
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     
     await updateDoc(planRef, {

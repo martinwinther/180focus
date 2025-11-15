@@ -17,7 +17,7 @@ const defaultPreferences: Omit<UserPreferences, 'userId' | 'createdAt' | 'update
 };
 
 export async function getUserPreferences(userId: string): Promise<UserPreferences> {
-  const db = getFirebaseFirestore();
+  const db = await getFirebaseFirestore();
   const prefsRef = doc(db, 'userPreferences', userId);
   const prefsSnap = await getDoc(prefsRef);
 
@@ -52,7 +52,7 @@ export async function updateUserPreferences(
   userId: string,
   updates: Partial<Omit<UserPreferences, 'userId' | 'createdAt' | 'updatedAt'>>
 ): Promise<void> {
-  const db = getFirebaseFirestore();
+  const db = await getFirebaseFirestore();
   const prefsRef = doc(db, 'userPreferences', userId);
   
   await updateDoc(prefsRef, {

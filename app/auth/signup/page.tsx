@@ -31,7 +31,7 @@ export default function SignUpPage() {
         import('@/lib/firestore/focusPlans'),
       ]);
 
-      const auth = getFirebaseAuth();
+      const auth = await getFirebaseAuth();
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,

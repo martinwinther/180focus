@@ -32,7 +32,7 @@ export async function createFocusDaysForPlan(
   }
   
   try {
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const daysCollectionRef = collection(planRef, DAYS_SUBCOLLECTION);
     
@@ -84,7 +84,7 @@ export async function getFocusDayForDate(
   planId: string,
   date: string
 ): Promise<FocusDay | null> {
-  const db = getFirebaseFirestore();
+  const db = await getFirebaseFirestore();
   const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
   const dayDocRef = doc(planRef, DAYS_SUBCOLLECTION, date);
   
@@ -111,7 +111,7 @@ export async function getFocusDayForDate(
  */
 export async function getAllFocusDaysForPlan(planId: string): Promise<FocusDay[]> {
   try {
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const daysCollectionRef = collection(planRef, DAYS_SUBCOLLECTION);
     
@@ -148,7 +148,7 @@ export async function getAllFocusDaysForPlan(planId: string): Promise<FocusDay[]
  */
 export async function getNextTrainingDay(planId: string): Promise<FocusDay | null> {
   try {
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const today = new Date().toISOString().split('T')[0];
     const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const daysCollectionRef = collection(planRef, DAYS_SUBCOLLECTION);
@@ -202,7 +202,7 @@ export async function markDayCompleted(
   dayId: string
 ): Promise<void> {
   try {
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const dayDocRef = doc(planRef, DAYS_SUBCOLLECTION, dayId);
     

@@ -30,7 +30,7 @@ export default function SignInPage() {
         import('@/lib/firebase/client'),
       ]);
 
-      const auth = getFirebaseAuth();
+      const auth = await getFirebaseAuth();
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -64,7 +64,7 @@ export default function SignInPage() {
         import('@/lib/firebase/client'),
       ]);
 
-      const auth = getFirebaseAuth();
+      const auth = await getFirebaseAuth();
       if (!auth.currentUser) return;
 
       setResendLoading(true);

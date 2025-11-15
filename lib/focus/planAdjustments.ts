@@ -41,7 +41,7 @@ export async function updateTrainingDaysPerWeekForFuture(
     }
 
     // Fetch the plan and verify ownership
-    const db = getFirebaseFirestore();
+    const db = await getFirebaseFirestore();
     const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
     const planDoc = await getDoc(planRef);
 

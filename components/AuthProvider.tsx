@@ -36,9 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       import('firebase/auth'),
       import('@/lib/firebase/client'),
     ])
-      .then(([{ onAuthStateChanged }, { getFirebaseAuth }]) => {
+      .then(async ([{ onAuthStateChanged }, { getFirebaseAuth }]) => {
         try {
-          const auth = getFirebaseAuth();
+          const auth = await getFirebaseAuth();
           unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         import('firebase/auth'),
         import('@/lib/firebase/client'),
       ]);
-      const auth = getFirebaseAuth();
+      const auth = await getFirebaseAuth();
       await firebaseSignOut(auth);
     } catch (error) {
       console.error('Error signing out:', error);

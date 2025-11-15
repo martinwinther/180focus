@@ -40,7 +40,8 @@ service cloud.firestore {
       // Users can update their own plans
       allow update: if isOwner(resource.data.userId);
       
-      // Users can delete their own plans
+      // Users can delete their own plans and related documents (days, session logs)
+      // Note: Client code must handle recursive deletion of subcollections
       allow delete: if isOwner(resource.data.userId);
       
       // Focus Days subcollection

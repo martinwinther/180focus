@@ -8,6 +8,8 @@ import {
   getActiveFocusPlanForUser,
   setFocusPlanStatus,
   resumeFocusPlan,
+  deletePlanAndRelatedData,
+  PlanDeletionError,
 } from '@/lib/firestore/focusPlans';
 import type { FocusPlan } from '@/lib/types/focusPlan';
 import { GlassCard, EmptyState, LoadingSpinner, Button, Badge } from '@/components/ui';
@@ -20,6 +22,8 @@ export default function PlansPage() {
   const [error, setError] = useState<string>('');
   const [completingPlanId, setCompletingPlanId] = useState<string | null>(null);
   const [resumingPlanId, setResumingPlanId] = useState<string | null>(null);
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string>('');
 
   const loadPlans = useCallback(async () => {
     if (!user) return;
@@ -82,6 +86,45 @@ export default function PlansPage() {
       );
     } finally {
       setResumingPlanId(null);
+    }
+  };
+
+  const handleDeletePlan = async (planId: string) => {
+    if (!user) return;
+
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      'Delete this plan and all its days and history?\n\n' +
+        'This cannot be undone and will permanently remove this plan\'s records.'
+    );
+
+    if (!confirmed) return;
+
+    setDeletingPlanId(planId);
+    setDeleteError('');
+
+    try {
+      await deletePlanAndRelatedData(user.uid, planId);
+      // Refresh plans list after successful deletion
+      await loadPlans();
+    } catch (err) {
+      console.error('Error deleting plan:', err);
+      
+      let errorMessage = 'We couldn\'t delete this plan. Please try again in a moment.';
+      
+      if (err instanceof PlanDeletionError) {
+        if (err.message.includes('active plan')) {
+          errorMessage = 'You can\'t delete an active plan. Mark it as completed first.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setDeleteError(errorMessage);
+      // Clear error after 5 seconds
+      setTimeout(() => setDeleteError(''), 5000);
+    } finally {
+      setDeletingPlanId(null);
     }
   };
 
@@ -315,12 +358,26 @@ export default function PlansPage() {
       )}
 
       <div>
-        <h2 className="mb-4 text-xl font-bold text-white">
-          {activePlan ? 'Plan History' : 'All Plans'}
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">
+            {activePlan ? 'Plan History' : 'All Plans'}
+          </h2>
+        </div>
+        {plans.some((p) => p.status !== 'active') && (
+          <p className="mb-4 text-sm text-white/60">
+            You can delete completed or archived plans if you no longer need their history.
+          </p>
+        )}
+        {deleteError && (
+          <div className="mb-4 rounded-lg bg-red-500/20 border border-red-500/30 p-3 text-sm text-red-300">
+            {deleteError}
+          </div>
+        )}
 
         <div className="space-y-4">
-          {plans.map((plan) => (
+          {plans
+            .filter((plan) => plan.id !== activePlan?.id) // Exclude active plan from history
+            .map((plan) => (
             <GlassCard key={plan.id} hover>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <Link
@@ -412,6 +469,39 @@ export default function PlansPage() {
                     >
                       {resumingPlanId === plan.id ? 'Resuming...' : 'Resume'}
                     </button>
+                  )}
+                  {plan.status !== 'active' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePlan(plan.id!);
+                      }}
+                      disabled={deletingPlanId === plan.id}
+                      className="text-red-300 hover:text-red-200 hover:bg-red-500/20"
+                    >
+                      {deletingPlanId === plan.id ? (
+                        <span className="flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4 animate-spin"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                          </svg>
+                          Deleting...
+                        </span>
+                      ) : (
+                        'Delete'
+                      )}
+                    </Button>
                   )}
                 </div>
               </div>

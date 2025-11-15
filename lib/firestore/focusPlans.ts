@@ -9,6 +9,7 @@ import {
   getDoc,
   doc,
   updateDoc,
+  deleteDoc,
   Timestamp,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -340,6 +341,100 @@ export async function resumeFocusPlan(userId: string, planId: string): Promise<v
     }
     console.error('Error resuming plan:', error);
     throw new Error('Failed to resume your plan. Please try again.');
+  }
+}
+
+/**
+ * Custom error for plan deletion failures
+ */
+export class PlanDeletionError extends Error {
+  constructor(message: string, public originalError?: unknown) {
+    super(message);
+    this.name = 'PlanDeletionError';
+  }
+}
+
+/**
+ * Deletes a plan and all related data (FocusDays and sessionLogs).
+ * 
+ * Rules:
+ * - Validates plan ownership
+ * - Prevents deletion of active plans
+ * - Deletes all session logs for each day
+ * - Deletes all days for the plan
+ * - Finally deletes the plan document
+ * 
+ * @throws {PlanDeletionError} If plan is active, doesn't exist, or user doesn't own it
+ * @throws {Error} If deletion fails
+ * 
+ * TODO: For very large datasets (1000+ days), consider using a Cloud Function
+ * with recursive delete to handle this more efficiently.
+ */
+export async function deletePlanAndRelatedData(
+  userId: string,
+  planId: string
+): Promise<void> {
+  try {
+    const db = await getFirebaseFirestore();
+    const planRef = doc(db, FOCUS_PLANS_COLLECTION, planId);
+    const planDoc = await getDoc(planRef);
+
+    // Validate plan exists
+    if (!planDoc.exists()) {
+      throw new PlanDeletionError('Plan not found');
+    }
+
+    const planData = planDoc.data();
+
+    // Validate ownership
+    if (planData.userId !== userId) {
+      throw new PlanDeletionError('Unauthorized: You do not own this plan');
+    }
+
+    // Prevent deletion of active plans
+    if (planData.status === 'active') {
+      throw new PlanDeletionError(
+        'Cannot delete an active plan. Mark it as completed first.'
+      );
+    }
+
+    // Fetch all FocusDays for this plan
+    const daysCollectionRef = collection(planRef, 'days');
+    const daysQuery = query(daysCollectionRef, where('userId', '==', userId));
+    const daysSnapshot = await getDocs(daysQuery);
+
+    // Delete session logs for each day, then delete the day
+    for (const dayDoc of daysSnapshot.docs) {
+      const dayRef = dayDoc.ref;
+      const sessionLogsCollectionRef = collection(dayRef, 'sessionLogs');
+      const sessionLogsQuery = query(
+        sessionLogsCollectionRef,
+        where('userId', '==', userId)
+      );
+      const sessionLogsSnapshot = await getDocs(sessionLogsQuery);
+
+      // Delete all session logs for this day
+      for (const logDoc of sessionLogsSnapshot.docs) {
+        await deleteDoc(logDoc.ref);
+      }
+
+      // Delete the day document
+      await deleteDoc(dayRef);
+    }
+
+    // Finally, delete the plan document
+    await deleteDoc(planRef);
+  } catch (error) {
+    // Re-throw PlanDeletionError as-is
+    if (error instanceof PlanDeletionError) {
+      throw error;
+    }
+
+    console.error('Error deleting plan and related data:', error);
+    throw new PlanDeletionError(
+      'Failed to delete plan. Please try again in a moment.',
+      error
+    );
   }
 }
 

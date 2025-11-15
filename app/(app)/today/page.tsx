@@ -10,6 +10,7 @@ import {
 } from '@/lib/firestore/focusPlans';
 import { getFocusDayForDate, getNextTrainingDay } from '@/lib/firestore/focusDays';
 import type { FocusPlan, FocusDay } from '@/lib/types/focusPlan';
+import { PomodoroTimer } from '@/components/PomodoroTimer';
 
 export default function TodayPage() {
   const { user } = useAuth();
@@ -269,121 +270,15 @@ export default function TodayPage() {
             </div>
           </div>
 
-          <div className="glass-card">
-            <h2 className="mb-4 text-xl font-semibold text-white">
-              Today's Focus Plan
-            </h2>
-            <p className="mb-6 text-sm text-white/70">
-              Follow these Pomodoro-style segments to complete your {todayDay.dailyTargetMinutes}{' '}
-              minutes of focused work today.
-            </p>
-
-            <div className="space-y-3">
-              {todayDay.segments.map((segment, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center justify-between rounded-xl p-4 ${
-                    segment.type === 'work'
-                      ? 'bg-white/10'
-                      : 'bg-white/5'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                        segment.type === 'work'
-                          ? 'bg-white/20'
-                          : 'bg-white/10'
-                      }`}
-                    >
-                      {segment.type === 'work' ? (
-                        <svg
-                          className="h-5 w-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="h-5 w-5 text-white/70"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    <div>
-                      <div className="font-medium text-white">
-                        {segment.type === 'work' ? 'Work Session' : 'Break'}
-                      </div>
-                      <div className="text-sm text-white/60">
-                        Segment {index + 1}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-white">
-                      {segment.minutes} min
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 rounded-lg bg-white/5 p-4 text-center">
-              <div className="text-sm text-white/60">
-                Total focus time today
-              </div>
-              <div className="mt-1 text-2xl font-bold text-white">
-                {todayDay.segments
-                  .filter(s => s.type === 'work')
-                  .reduce((sum, s) => sum + s.minutes, 0)}{' '}
-                minutes
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-card text-center">
-            <div className="mb-4 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
-                <svg
-                  className="h-8 w-8 text-white/60"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            <h3 className="mb-2 text-xl font-semibold text-white">
-              Timer coming soon
-            </h3>
-            <p className="mb-6 text-white/70">
-              The interactive Pomodoro timer will be implemented in the next phase.
-              For now, you can see your daily plan above.
-            </p>
-          </div>
+          <PomodoroTimer
+            userId={user!.uid}
+            planId={plan.id!}
+            dayId={todayDay.id!}
+            segments={todayDay.segments}
+            dailyTargetMinutes={todayDay.dailyTargetMinutes}
+            dayIndex={todayDay.index}
+            date={todayDay.date}
+          />
         </>
       )}
     </div>

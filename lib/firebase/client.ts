@@ -33,13 +33,42 @@ let firebaseFirestore: Firestore | undefined;
 
 async function fetchFirebaseConfig(): Promise<typeof firebaseConfig> {
   try {
-    const response = await fetch('/api/firebase-config');
+    // Use absolute URL to ensure it works in all environments
+    const apiUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/api/firebase-config`
+      : '/api/firebase-config';
+    
+    console.log('Fetching Firebase config from:', apiUrl);
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
     if (!response.ok) {
-      throw new Error('Failed to fetch Firebase config');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Failed to fetch Firebase config:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(`Failed to fetch Firebase config: ${response.status} ${errorData.error || 'Unknown error'}`);
     }
-    return await response.json();
+    
+    const config = await response.json();
+    if (config.error) {
+      console.error('API returned error:', config);
+      return null;
+    }
+    
+    console.log('Successfully fetched Firebase config from API');
+    return config;
   } catch (error) {
     console.error('Error fetching Firebase config from API:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', error.message, error.stack);
+    }
     return null;
   }
 }

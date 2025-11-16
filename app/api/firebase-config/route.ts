@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/utils/logger';
 
 export async function GET() {
   try {
@@ -14,7 +15,7 @@ export async function GET() {
     };
 
     // Log what we have for debugging (without exposing sensitive values)
-    console.log('Firebase config check:', {
+    logger.info('Firebase config check:', {
       hasApiKey: !!config.apiKey,
       hasProjectId: !!config.projectId,
       hasAuthDomain: !!config.authDomain,
@@ -39,7 +40,7 @@ export async function GET() {
 
     return NextResponse.json(config);
   } catch (error) {
-    console.error('Error in firebase-config route:', error);
+    logger.error('Error in firebase-config route:', error);
     return NextResponse.json(
       { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

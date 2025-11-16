@@ -10,6 +10,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getFirebaseFirestore } from '@/lib/firebase/client';
+import { logger } from '@/lib/utils/logger';
 import type { FocusDay } from '@/lib/types/focusPlan';
 import type { FocusDayPlan } from '@/lib/focus/ramp';
 
@@ -46,7 +47,7 @@ export async function createFocusDaysForPlan(
       for (const dayPlan of batchDays) {
         // Validate day plan has required fields
         if (!dayPlan.date || !dayPlan.dailyTargetMinutes || !dayPlan.segments) {
-          console.error('Invalid day plan:', dayPlan);
+          logger.error('Invalid day plan:', dayPlan);
           throw new Error('Invalid day plan data');
         }
         
@@ -72,7 +73,7 @@ export async function createFocusDaysForPlan(
       await batch.commit();
     }
   } catch (error) {
-    console.error('Error creating focus days:', error);
+    logger.error('Error creating focus days:', error);
     throw new Error('Failed to create training days. Please try again.');
   }
 }
@@ -113,7 +114,7 @@ export async function getFocusDayForDate(
       ...dayDoc.data(),
     } as FocusDay;
   } catch (error) {
-    console.error('Error fetching focus day:', error);
+    logger.error('Error fetching focus day:', error);
     return null;
   }
 }
@@ -152,7 +153,7 @@ export async function getAllFocusDaysForPlan(planId: string, userId: string): Pr
     
     return days;
   } catch (error) {
-    console.error('Error fetching focus days:', error);
+    logger.error('Error fetching focus days:', error);
     throw new Error('Failed to load training days. Please try again.');
   }
 }
@@ -202,7 +203,7 @@ export async function getNextTrainingDay(planId: string, userId: string): Promis
     
     return nextDay;
   } catch (error) {
-    console.error('Error fetching next training day:', error);
+    logger.error('Error fetching next training day:', error);
     return null; // Return null rather than throwing for this optional feature
   }
 }
@@ -242,7 +243,7 @@ export async function markDayCompleted(
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('Error marking day as completed:', error);
+    logger.error('Error marking day as completed:', error);
     throw new Error('Failed to mark day as completed. Please try again.');
   }
 }

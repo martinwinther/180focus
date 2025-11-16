@@ -38,6 +38,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans">
+        {/* Client-side monitoring initialization */}
+        {/* @ts-expect-error Dynamic import in client tree */}
+        {typeof window !== 'undefined' ? require('@/components/Monitoring').Monitoring() : null}
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { LoadingSpinner } from '@/components/ui';
+import { logger } from '@/lib/utils/logger';
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DEFAULT_TRAINING_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -75,7 +76,7 @@ export default function OnboardingPage() {
         return;
       }
     } catch (error) {
-      console.error('Error in onboarding redirect:', error);
+      logger.error('Error in onboarding redirect:', error);
       // Fallback: if redirect fails, try window.location
       if (typeof window !== 'undefined' && !user) {
         window.location.href = '/auth/signup';
@@ -190,7 +191,7 @@ export default function OnboardingPage() {
       await createNewActivePlanForUser(user.uid, config);
       router.push('/today');
     } catch (err) {
-      console.error('Error creating plan:', err);
+      logger.error('Error creating plan:', err);
       setError(
         err instanceof Error
           ? err.message

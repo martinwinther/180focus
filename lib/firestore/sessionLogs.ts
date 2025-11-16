@@ -10,6 +10,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getFirebaseFirestore } from '@/lib/firebase/client';
+import { logger } from '@/lib/utils/logger';
 
 const FOCUS_PLANS_COLLECTION = 'focusPlans';
 const DAYS_SUBCOLLECTION = 'days';
@@ -93,7 +94,7 @@ export async function logCompletedWorkSegment(
     const docRef = await addDoc(sessionLogsRef, sessionLogData);
     return docRef.id;
   } catch (error) {
-    console.error('Error logging work segment:', error);
+    logger.error('Error logging work segment:', error);
     throw new Error('Failed to log work session. Please check your connection.');
   }
 }
@@ -135,7 +136,7 @@ export async function getSessionLogsForDay(
 
     return logs;
   } catch (error) {
-    console.error('Error fetching session logs:', error);
+    logger.error('Error fetching session logs:', error);
     return [];
   }
 }
@@ -185,7 +186,7 @@ export async function getWorkSessionLogsForUser(
 
     return allLogs;
   } catch (error) {
-    console.error('Error fetching work session logs for user:', error);
+    logger.error('Error fetching work session logs for user:', error);
     return [];
   }
 }

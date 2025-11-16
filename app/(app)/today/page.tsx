@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -102,7 +103,7 @@ export default function TodayPage() {
         }
       }
     } catch (err: unknown) {
-      console.error('Error loading plan:', err);
+      logger.error('Error loading plan:', err);
       
       // If error is likely due to no plan existing, redirect to onboarding
       // Otherwise show error state
@@ -460,7 +461,7 @@ function PlanCompletedView({ plan, userId }: PlanCompletedViewProps) {
         const planStats = await getPlanCompletionStats(plan.id, userId);
         setStats(planStats);
       } catch (error) {
-        console.error('Error loading plan stats:', error);
+        logger.error('Error loading plan stats:', error);
       } finally {
         setLoading(false);
       }

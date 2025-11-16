@@ -1,6 +1,7 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { logger } from '@/lib/utils/logger';
 
 // Try to get config from build-time env vars first, fallback to fetching from API
 let firebaseConfig: {
@@ -38,7 +39,7 @@ async function fetchFirebaseConfig(): Promise<typeof firebaseConfig> {
       ? `${window.location.origin}/api/firebase-config`
       : '/api/firebase-config';
     
-    console.log('Fetching Firebase config from:', apiUrl);
+    logger.info('Fetching Firebase config from:', apiUrl);
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
@@ -48,7 +49,7 @@ async function fetchFirebaseConfig(): Promise<typeof firebaseConfig> {
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('Failed to fetch Firebase config:', {
+      logger.error('Failed to fetch Firebase config:', {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
@@ -58,16 +59,16 @@ async function fetchFirebaseConfig(): Promise<typeof firebaseConfig> {
     
     const config = await response.json();
     if (config.error) {
-      console.error('API returned error:', config);
+      logger.error('API returned error:', config);
       return null;
     }
     
-    console.log('Successfully fetched Firebase config from API');
+    logger.info('Successfully fetched Firebase config from API');
     return config;
   } catch (error) {
-    console.error('Error fetching Firebase config from API:', error);
+    logger.error('Error fetching Firebase config from API:', error);
     if (error instanceof Error) {
-      console.error('Error details:', error.message, error.stack);
+      logger.error('Error details:', error.message, error.stack);
     }
     return null;
   }
@@ -87,7 +88,7 @@ async function initializeFirebase() {
     // If config is not available from env vars, fetch from API
     let config = firebaseConfig;
     if (!config || !config.apiKey || !config.projectId) {
-      console.log('Firebase config not available from env vars, fetching from API...');
+      logger.info('Firebase config not available from env vars, fetching from API...');
       config = await fetchFirebaseConfig();
       if (config) {
         firebaseConfig = config;
@@ -97,7 +98,7 @@ async function initializeFirebase() {
     if (getApps().length === 0) {
       // Check if config values are available
       if (!config || !config.apiKey || !config.projectId) {
-        console.error('Firebase configuration is missing:', {
+        logger.error('Firebase configuration is missing:', {
           hasApiKey: !!config?.apiKey,
           hasProjectId: !!config?.projectId,
           hasAuthDomain: !!config?.authDomain,
@@ -105,7 +106,7 @@ async function initializeFirebase() {
           hasMessagingSenderId: !!config?.messagingSenderId,
           hasAppId: !!config?.appId,
         });
-        console.error('Make sure NEXT_PUBLIC_FIREBASE_* environment variables are set in Cloudflare Workers.');
+        logger.error('Make sure NEXT_PUBLIC_FIREBASE_* environment variables are set in Cloudflare Workers.');
         return;
       }
       
@@ -118,12 +119,12 @@ async function initializeFirebase() {
       firebaseAuth = getAuth(firebaseApp);
       firebaseFirestore = getFirestore(firebaseApp);
     } else {
-      console.error('Failed to create Firebase app instance');
+      logger.error('Failed to create Firebase app instance');
     }
   } catch (error) {
-    console.error('Error initializing Firebase:', error);
+    logger.error('Error initializing Firebase:', error);
     if (error instanceof Error) {
-      console.error('Error details:', error.message, error.stack);
+      logger.error('Error details:', error.message, error.stack);
     }
   }
 }
@@ -138,7 +139,7 @@ try {
   // Silently fail during module evaluation
   // Firebase will be initialized when actually used via the getters
   if (typeof window !== 'undefined') {
-    console.error('Failed to initialize Firebase during module load:', error);
+    logger.error('Failed to initialize Firebase during module load:', error);
   }
 }
 

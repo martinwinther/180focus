@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { logger } from '@/lib/utils/logger';
 import { usePomodoroTimer } from '@/lib/focus/usePomodoroTimer';
 import { logCompletedWorkSegment, getSessionLogsForDay } from '@/lib/firestore/sessionLogs';
 import { buildDailySummary } from '@/lib/focus/history';
@@ -72,10 +73,10 @@ export function PomodoroTimer({
         // Request notification permission if notifications are enabled
         if (prefs.notificationsEnabled && canUseNotifications()) {
           const permission = await requestNotificationPermission();
-          console.log('Notification permission:', permission);
+          logger.info('Notification permission:', permission);
         }
       } catch (error) {
-        console.error('Error loading preferences:', error);
+        logger.error('Error loading preferences:', error);
       }
 
       try {
@@ -83,7 +84,7 @@ export function PomodoroTimer({
         const loggedIndices = new Set(existingLogs.map((log) => log.segmentIndex));
         setLoggedSegmentIndices(loggedIndices);
       } catch (error) {
-        console.error('Error loading session logs:', error);
+        logger.error('Error loading session logs:', error);
       }
     }
 
@@ -147,7 +148,7 @@ export function PomodoroTimer({
     const isMatchingDate = persisted.date === date;
 
     if (!isMatchingPlan || !isMatchingDay || !isMatchingDate) {
-      console.log('Persisted state is stale (different plan/day/date), clearing');
+      logger.debug('Persisted state is stale (different plan/day/date), clearing');
       clearSessionState(userId);
       setResumeDecision(null);
       setInitialTimerOptions({
@@ -163,7 +164,7 @@ export function PomodoroTimer({
 
     // Check if segment index is valid
     if (persisted.segmentIndex >= segments.length) {
-      console.log('Persisted segment index out of range, clearing');
+      logger.debug('Persisted segment index out of range, clearing');
       clearSessionState(userId);
       setResumeDecision(null);
       setInitialTimerOptions({
@@ -177,7 +178,7 @@ export function PomodoroTimer({
     // If segment time expired while away, show resume dialog with 0 seconds.
     // Future enhancement: Could auto-advance segments if multiple have elapsed.
     if (effectiveSeconds <= 0) {
-      console.log('Segment time expired while away, treating as completed but not logged');
+      logger.info('Segment time expired while away, treating as completed but not logged');
       setPersistedState({ ...persisted, secondsRemaining: 0 });
       setResumeDecision('pending');
       return;
@@ -217,7 +218,7 @@ export function PomodoroTimer({
     if (preferences?.soundEnabled && audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch((error) => {
-        console.error('Error playing sound:', error);
+        logger.error('Error playing sound:', error);
       });
     }
   };
@@ -285,7 +286,7 @@ export function PomodoroTimer({
 
     const startTime = segmentStartTimesRef.current.get(segmentIndex);
     if (!startTime) {
-      console.error('No start time found for segment:', segmentIndex);
+      logger.error('No start time found for segment:', segmentIndex);
       return;
     }
 
@@ -293,7 +294,7 @@ export function PomodoroTimer({
     const actualSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
 
     if (actualSeconds < 0 || actualSeconds > segment.minutes * 120) {
-      console.error('Invalid actual seconds:', actualSeconds, 'for segment:', segmentIndex);
+      logger.error('Invalid actual seconds:', actualSeconds, 'for segment:', segmentIndex);
       setIsLoggingError(true);
       setLoggingErrorMessage('Timer data looks incorrect. Session may not have been logged.');
       return;
@@ -323,22 +324,22 @@ export function PomodoroTimer({
       if (isLastSegment) {
         try {
           await markDayCompleted(userId, planId, dayId);
-          console.log('Day marked as completed');
+          logger.info('Day marked as completed');
 
           // Check if this is the last training day in the plan
           const isLastDay = await isLastTrainingDay(planId, date, userId);
           if (isLastDay) {
             await completePlan(userId, planId);
-            console.log('Plan completed - user finished the last training day');
+            logger.info('Plan completed - user finished the last training day');
           }
         } catch (error) {
-          console.error('Error marking day/plan as completed:', error);
+          logger.error('Error marking day/plan as completed:', error);
           // Don't show error to user - their progress is already logged
           // The day completion status can be fixed later if needed
         }
       }
     } catch (error) {
-      console.error('Error logging work segment:', error);
+      logger.error('Error logging work segment:', error);
       setIsLoggingError(true);
       setLoggingErrorMessage(
         error instanceof Error

@@ -14,6 +14,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getFirebaseFirestore } from '@/lib/firebase/client';
+import { logger } from '@/lib/utils/logger';
 import type { FocusPlan, FocusPlanConfig, FocusPlanStatus } from '@/lib/types/focusPlan';
 import { generateFocusDayPlans, RampValidationError, NoTrainingDaysError } from '@/lib/focus/ramp';
 import type { TrainingDayOfWeek } from '@/lib/focus/ramp';
@@ -89,7 +90,7 @@ export async function createFocusPlan(
     try {
       await createFocusDaysForPlan(userId, planId, dayPlans);
     } catch (error) {
-      console.error('Error creating focus days:', error);
+      logger.error('Error creating focus days:', error);
       // Mark plan as broken so user knows there's an issue
       const db = await getFirebaseFirestore();
       await updateDoc(doc(db, FOCUS_PLANS_COLLECTION, planId), {
@@ -114,7 +115,7 @@ export async function createFocusPlan(
     }
     
     // Wrap other errors
-    console.error('Error creating focus plan:', error);
+    logger.error('Error creating focus plan:', error);
     throw new PlanCreationError(
       'Failed to create your focus plan. Please check your connection and try again.',
       error
@@ -146,7 +147,7 @@ export async function getActiveFocusPlanForUser(
     
     // Runtime validation: ensure required fields exist
     if (!data.userId || !data.targetDailyMinutes || !data.trainingDaysPerWeek) {
-      console.error('Invalid plan data:', data);
+      logger.error('Invalid plan data:', data);
       return null;
     }
     
@@ -155,7 +156,7 @@ export async function getActiveFocusPlanForUser(
       ...data,
     } as FocusPlan;
   } catch (error) {
-    console.error('Error fetching active focus plan:', error);
+    logger.error('Error fetching active focus plan:', error);
     throw new Error('Failed to load your active plan. Please try again.');
   }
 }
@@ -178,7 +179,7 @@ export async function getAllPlansForUser(
         const data = doc.data();
         // Basic validation
         if (!data.userId || !data.targetDailyMinutes) {
-          console.warn('Skipping invalid plan:', doc.id);
+          logger.warn('Skipping invalid plan:', doc.id);
           return null;
         }
         return {
@@ -188,7 +189,7 @@ export async function getAllPlansForUser(
       })
       .filter((plan): plan is FocusPlan => plan !== null);
   } catch (error) {
-    console.error('Error fetching all plans:', error);
+    logger.error('Error fetching all plans:', error);
     throw new Error('Failed to load your plans. Please try again.');
   }
 }
@@ -215,7 +216,7 @@ export async function getFocusPlanById(
 
     // Runtime validation: ensure required fields exist
     if (!data.targetDailyMinutes || !data.trainingDaysPerWeek) {
-      console.error('Invalid plan data:', data);
+      logger.error('Invalid plan data:', data);
       return null;
     }
 
@@ -224,7 +225,7 @@ export async function getFocusPlanById(
       ...data,
     } as FocusPlan;
   } catch (error) {
-    console.error('Error fetching focus plan by ID:', error);
+    logger.error('Error fetching focus plan by ID:', error);
     throw new Error('Failed to load plan. Please try again.');
   }
 }
@@ -249,7 +250,7 @@ export async function setFocusPlanStatus(
 
     await updateDoc(planRef, updateData);
   } catch (error) {
-    console.error('Error updating plan status:', error);
+    logger.error('Error updating plan status:', error);
     throw new Error('Failed to update plan status. Please try again.');
   }
 }
@@ -266,7 +267,7 @@ export async function createNewActivePlanForUser(
       try {
         await setFocusPlanStatus(userId, activePlan.id, 'archived');
       } catch (error) {
-        console.error('Error archiving old plan:', error);
+        logger.error('Error archiving old plan:', error);
         // Continue anyway - creating new plan is more important
       }
     }
@@ -292,7 +293,7 @@ export async function createNewActivePlanForUser(
       throw error;
     }
     
-    console.error('Error creating new active plan:', error);
+    logger.error('Error creating new active plan:', error);
     throw new PlanCreationError(
       'Failed to create your new plan. Please try again.',
       error
@@ -339,7 +340,7 @@ export async function resumeFocusPlan(userId: string, planId: string): Promise<v
     if (error instanceof Error && error.message.includes('already have an active plan')) {
       throw error;
     }
-    console.error('Error resuming plan:', error);
+    logger.error('Error resuming plan:', error);
     throw new Error('Failed to resume your plan. Please try again.');
   }
 }
@@ -430,7 +431,7 @@ export async function deletePlanAndRelatedData(
       throw error;
     }
 
-    console.error('Error deleting plan and related data:', error);
+    logger.error('Error deleting plan and related data:', error);
     throw new PlanDeletionError(
       'Failed to delete plan. Please try again in a moment.',
       error

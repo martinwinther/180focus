@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GlassCard, Button } from '@/components/ui';
 
+import { logger } from '@/lib/utils/logger';
+
 export default function EmailVerifiedPage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
@@ -57,7 +59,7 @@ export default function EmailVerifiedPage() {
                 router.replace('/today');
               }
             } catch (err) {
-              console.error('Error checking active plan:', err);
+              logger.error('Error checking active plan:', err);
               // Fallback to today page if plan check fails
               router.replace('/today');
             }
@@ -76,7 +78,7 @@ export default function EmailVerifiedPage() {
           }, 1500); // Brief delay to show the message
         }
       } catch (err) {
-        console.error('Error reloading user after email verification:', err);
+        logger.error('Error reloading user after email verification:', err);
         // On error, still redirect to sign-in after a brief delay
         setAutoRedirected(true);
         redirectTimeout = setTimeout(() => {

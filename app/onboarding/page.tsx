@@ -43,6 +43,20 @@ export default function OnboardingPage() {
     setIsClient(true);
   }, []);
 
+  // When switching configuration mode, clear errors that are not relevant
+  // to the newly selected mode to avoid keeping the button disabled.
+  useEffect(() => {
+    setValidationErrors((prev) => {
+      const next = { ...prev };
+      if (configMode === 'endDate') {
+        next.trainingDaysCount = undefined;
+      } else {
+        next.endDate = undefined;
+      }
+      return next;
+    });
+  }, [configMode]);
+
   useEffect(() => {
     // Only redirect on client side after auth has finished loading to avoid SSR issues
     if (!isClient || typeof window === 'undefined') return;
@@ -133,6 +147,18 @@ export default function OnboardingPage() {
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  // Only treat errors relevant to the currently selected configuration mode
+  // as blocking for the submit button.
+  const hasBlockingErrors = (): boolean => {
+    const { targetDailyMinutes, trainingDaysPerWeek, endDate: endDateErr, trainingDaysCount: daysCountErr } =
+      validationErrors;
+    if (targetDailyMinutes || trainingDaysPerWeek) return true;
+    if (configMode === 'endDate') {
+      return Boolean(endDateErr);
+    }
+    return Boolean(daysCountErr);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -400,7 +426,7 @@ export default function OnboardingPage() {
             </Link>
             <button
               type="submit"
-              disabled={isSubmitting || Object.keys(validationErrors).length > 0}
+              disabled={isSubmitting || hasBlockingErrors()}
               className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Creating plan...' : 'Create plan'}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePomodoroTimer } from '@/lib/focus/usePomodoroTimer';
 import { logCompletedWorkSegment, getSessionLogsForDay } from '@/lib/firestore/sessionLogs';
+import { buildDailySummary } from '@/lib/focus/history';
 import { getUserPreferences } from '@/lib/firestore/userPreferences';
 import { markDayCompleted } from '@/lib/firestore/focusDays';
 import { isLastTrainingDay, completePlan } from '@/lib/focus/planCompletion';
@@ -55,6 +56,7 @@ export function PomodoroTimer({
     initialSecondsRemaining: number;
     initialIsRunning: boolean;
   } | null>(null);
+  const [isDayComplete, setIsDayComplete] = useState(false);
 
   const segmentStartTimesRef = useRef<Map<number, Date>>(new Map());
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -99,6 +101,32 @@ export function PomodoroTimer({
   useEffect(() => {
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
+
+    // First, check if today's training is already complete; if so, avoid any resume UI
+    (async () => {
+      try {
+        const logs = await getSessionLogsForDay(userId, planId, dayId);
+        const summary = buildDailySummary(
+          {
+            id: dayId,
+            planId,
+            date,
+            index: dayIndex,
+            dailyTargetMinutes,
+            segments,
+          } as any, // FocusDay shape; fields used in buildDailySummary are provided
+          logs
+        );
+        const complete = summary.completionRatio >= 1.0;
+        setIsDayComplete(complete);
+        if (complete) {
+          clearSessionState(userId);
+        }
+      } catch (e) {
+        // If this fails, default to not complete
+        setIsDayComplete(false);
+      }
+    })();
 
     const persisted = loadSessionState(userId);
     
@@ -348,8 +376,8 @@ export function PomodoroTimer({
     saveSessionState(persistState);
   };
 
-  // Show resume/restart dialog if needed
-  if (resumeDecision === 'pending' && persistedState) {
+  // Show resume/restart dialog if needed (but never when day is already complete)
+  if (!isDayComplete && resumeDecision === 'pending' && persistedState) {
     const effectiveSeconds = calculateEffectiveSecondsRemaining(persistedState);
     const formatTime = (seconds: number): string => {
       const mins = Math.floor(seconds / 60);

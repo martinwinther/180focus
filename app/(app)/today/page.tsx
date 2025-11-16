@@ -17,6 +17,8 @@ import type { FocusPlan, FocusDay } from '@/lib/types/focusPlan';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
 import { TodayProgress } from '@/components/TodayProgress';
 import { GlassCard, EmptyState, LoadingSpinner, Button } from '@/components/ui';
+import { getSessionLogsForDay } from '@/lib/firestore/sessionLogs';
+import { buildDailySummary } from '@/lib/focus/history';
 
 export default function TodayPage() {
   const { user, isVerified } = useAuth();
@@ -29,6 +31,7 @@ export default function TodayPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [progressKey, setProgressKey] = useState(0);
+  const [isTodayComplete, setIsTodayComplete] = useState(false);
 
   const loadPlan = useCallback(async () => {
     if (!user) return;
@@ -131,6 +134,22 @@ export default function TodayPage() {
 
     return () => clearInterval(interval);
   }, [todayDay]);
+
+  // Recompute whether today's target is complete whenever logs might change
+  useEffect(() => {
+    async function checkCompletion() {
+      if (!user || !plan || !todayDay) return;
+      try {
+        const logs = await getSessionLogsForDay(user.uid, plan.id!, todayDay.id!);
+        const summary = buildDailySummary(todayDay, logs);
+        setIsTodayComplete(summary.completionRatio >= 1.0);
+      } catch (e) {
+        // Non-fatal: keep timer visible if unsure
+        setIsTodayComplete(false);
+      }
+    }
+    checkCompletion();
+  }, [user, plan, todayDay, progressKey]);
 
   if (loading) {
     return <LoadingSpinner message="Loading..." />;
@@ -402,15 +421,17 @@ export default function TodayPage() {
         refreshKey={progressKey}
       />
 
-      <PomodoroTimer
-        userId={user!.uid}
-        planId={plan.id!}
-        dayId={todayDay.id!}
-        segments={todayDay.segments}
-        dailyTargetMinutes={todayDay.dailyTargetMinutes}
-        dayIndex={todayDay.index}
-        date={todayDay.date}
-      />
+      {!isTodayComplete && (
+        <PomodoroTimer
+          userId={user!.uid}
+          planId={plan.id!}
+          dayId={todayDay.id!}
+          segments={todayDay.segments}
+          dailyTargetMinutes={todayDay.dailyTargetMinutes}
+          dayIndex={todayDay.index}
+          date={todayDay.date}
+        />
+      )}
     </div>
   );
 }

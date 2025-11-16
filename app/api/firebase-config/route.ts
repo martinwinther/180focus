@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
 
+// Ensure this API route runs on the Edge runtime for Cloudflare Pages
+export const runtime = 'edge';
+
 export async function GET() {
   try {
     // This endpoint provides Firebase config to the client

@@ -9,7 +9,10 @@
     "lint": "next lint",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "pages:build": "npx @cloudflare/next-on-pages@latest",
+    "pages:preview": "npm run pages:build && wrangler pages dev .open-next/assets --compatibility-date=2025-03-25",
+    "pages:deploy": "npm run pages:build && wrangler pages deploy .open-next/assets"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.12.0",

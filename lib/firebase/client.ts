@@ -106,7 +106,7 @@ async function initializeFirebase() {
           hasMessagingSenderId: !!config?.messagingSenderId,
           hasAppId: !!config?.appId,
         });
-        logger.error('Make sure NEXT_PUBLIC_FIREBASE_* environment variables are set in Cloudflare Workers.');
+        logger.error('Make sure NEXT_PUBLIC_FIREBASE_* environment variables are set in Vercel.');
         return;
       }
       

@@ -43,7 +43,8 @@ The app emphasizes gentle progression and clarity. The interface uses a calm, gl
 
 - **Frontend:** Next.js 15 with App Router, TypeScript, Tailwind CSS
 - **Backend:** Firebase Authentication + Firestore
-- **Deployment:** Cloudflare Workers (via OpenNext.js)
+- **Deployment:** Vercel
+- **Live URL:** https://focus-ramp.vercel.app/
 
 ## Getting Started
 
@@ -86,11 +87,17 @@ npm run dev
 npm run build
 ```
 
-### Deploy to Cloudflare
+### Deploy to Vercel
 
-```bash
-npm run deploy
-```
+The app is deployed on [Vercel](https://vercel.com) at https://focus-ramp.vercel.app/
+
+To deploy:
+1. Push your code to GitHub
+2. Import your repository in Vercel
+3. Add environment variables (Firebase config)
+4. Deploy!
+
+Vercel will automatically detect Next.js and use the correct build settings.
 
 ## Project Structure
 

@@ -7,7 +7,7 @@ export const runtime = 'edge';
 export async function GET() {
   try {
     // This endpoint provides Firebase config to the client
-    // Server-side env vars are available at runtime in Cloudflare
+    // Server-side env vars are available at runtime in Vercel
     const config = {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
       authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',

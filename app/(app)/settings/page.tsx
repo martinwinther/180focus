@@ -12,7 +12,7 @@ import {
 import { getAllFocusDaysForPlan } from '@/lib/firestore/focusDays';
 import { getUserPreferences, updateUserPreferences } from '@/lib/firestore/userPreferences';
 import { updateTrainingDaysPerWeekForFuture } from '@/lib/focus/planAdjustments';
-import { GlassCard, LoadingSpinner, Button } from '@/components/ui';
+import { GlassCard, LoadingSpinner, Button, Toggle } from '@/components/ui';
 import type { FocusPlan } from '@/lib/types/focusPlan';
 import type { UserPreferences } from '@/lib/firestore/userPreferences';
 import type { TrainingDayOfWeek } from '@/lib/focus/ramp';
@@ -423,22 +423,12 @@ export default function SettingsPage() {
                   Play a soft sound when a session finishes
                 </div>
               </div>
-              <button
-                onClick={() =>
-                  handlePreferenceChange('soundEnabled', !preferences.soundEnabled)
-                }
+              <Toggle
+                checked={preferences.soundEnabled}
+                onChange={(checked) => handlePreferenceChange('soundEnabled', checked)}
                 disabled={saving}
-                className={`relative h-8 w-14 rounded-full transition-colors ${
-                  preferences.soundEnabled ? 'bg-green-500/80' : 'bg-white/20'
-                }`}
-                aria-label="Toggle sound notifications"
-              >
-                <span
-                  className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform ${
-                    preferences.soundEnabled ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                ></span>
-              </button>
+                ariaLabel="Toggle sound notifications"
+              />
             </div>
 
             <div className="flex items-center justify-between rounded-xl bg-white/5 p-4">
@@ -458,24 +448,12 @@ export default function SettingsPage() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={() =>
-                  handlePreferenceChange('notificationsEnabled', !preferences.notificationsEnabled)
-                }
+              <Toggle
+                checked={preferences.notificationsEnabled && notificationsSupported}
+                onChange={(checked) => handlePreferenceChange('notificationsEnabled', checked)}
                 disabled={saving || !notificationsSupported}
-                className={`relative h-8 w-14 rounded-full transition-colors ${
-                  preferences.notificationsEnabled && notificationsSupported ? 'bg-green-500/80' : 'bg-white/20'
-                } ${!notificationsSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
-                aria-label="Toggle desktop notifications"
-              >
-                <span
-                  className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform ${
-                    preferences.notificationsEnabled && notificationsSupported
-                      ? 'translate-x-7'
-                      : 'translate-x-1'
-                  }`}
-                ></span>
-              </button>
+                ariaLabel="Toggle desktop notifications"
+              />
             </div>
 
             <div className="flex items-center justify-between rounded-xl bg-white/5 p-4">
@@ -485,27 +463,12 @@ export default function SettingsPage() {
                   Automatically start the next session after one completes
                 </div>
               </div>
-              <button
-                onClick={() =>
-                  handlePreferenceChange(
-                    'autoStartNextSegment',
-                    !preferences.autoStartNextSegment
-                  )
-                }
+              <Toggle
+                checked={preferences.autoStartNextSegment}
+                onChange={(checked) => handlePreferenceChange('autoStartNextSegment', checked)}
                 disabled={saving}
-                className={`relative h-8 w-14 rounded-full transition-colors ${
-                  preferences.autoStartNextSegment ? 'bg-green-500/80' : 'bg-white/20'
-                }`}
-                aria-label="Toggle auto-start next session"
-              >
-                <span
-                  className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform ${
-                    preferences.autoStartNextSegment
-                      ? 'translate-x-7'
-                      : 'translate-x-1'
-                  }`}
-                ></span>
-              </button>
+                ariaLabel="Toggle auto-start next session"
+              />
             </div>
           </div>
         </GlassCard>

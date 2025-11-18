@@ -60,9 +60,6 @@ export function PomodoroTimer({
   const [isDayComplete, setIsDayComplete] = useState(false);
 
   const segmentStartTimesRef = useRef<Map<number, Date>>(new Map());
-  const segmentRunningTimeRef = useRef<Map<number, number>>(new Map()); // Accumulated running time in seconds
-  const segmentLastRunningStartRef = useRef<Map<number, Date | null>>(new Map()); // Last time timer started running
-  const previousIsRunningRef = useRef<Map<number, boolean>>(new Map()); // Track previous isRunning state per segment
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isInitializedRef = useRef(false);
 
@@ -266,11 +263,9 @@ export function PomodoroTimer({
   };
 
   const handleWorkSegmentStart = (segmentIndex: number, segment: FocusSegment) => {
+    // Record when the user starts the segment (when they hit START)
     const now = new Date();
     segmentStartTimesRef.current.set(segmentIndex, now);
-    segmentRunningTimeRef.current.set(segmentIndex, 0);
-    segmentLastRunningStartRef.current.set(segmentIndex, null); // Will be set when timer actually starts running
-    previousIsRunningRef.current.set(segmentIndex, false);
   };
 
   const handleSegmentComplete = async (segmentIndex: number, segment: FocusSegment) => {
@@ -291,26 +286,20 @@ export function PomodoroTimer({
       return;
     }
 
+    // Calculate time from START to STOP (or completion)
+    // Simple approach: time elapsed from when segment started to when it completed
     const startTime = segmentStartTimesRef.current.get(segmentIndex);
     if (!startTime) {
       logger.error('No start time found for segment:', segmentIndex);
       return;
     }
-
-    // Calculate actual running time (excluding paused time)
-    const accumulatedTime = segmentRunningTimeRef.current.get(segmentIndex) || 0;
-    const lastRunningStart = segmentLastRunningStartRef.current.get(segmentIndex);
-    
-    let actualSeconds = accumulatedTime;
-    
-    // If timer is currently running, add the time since it last started
-    if (lastRunningStart !== null && lastRunningStart !== undefined) {
-      const now = new Date();
-      const currentRunningDuration = Math.floor((now.getTime() - lastRunningStart.getTime()) / 1000);
-      actualSeconds += currentRunningDuration;
-    }
     
     const endTime = new Date();
+    const elapsedSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+    const plannedSeconds = segment.minutes * 60;
+    
+    // Cap at planned time: can go UNDER but never OVER
+    const actualSeconds = Math.min(elapsedSeconds, plannedSeconds);
 
     if (actualSeconds < 0 || actualSeconds > segment.minutes * 120) {
       logger.error('Invalid actual seconds:', actualSeconds, 'for segment:', segmentIndex);
@@ -335,9 +324,6 @@ export function PomodoroTimer({
       // Mark as logged
       setLoggedSegmentIndices((prev) => new Set([...prev, segmentIndex]));
       segmentStartTimesRef.current.delete(segmentIndex);
-      segmentRunningTimeRef.current.delete(segmentIndex);
-      segmentLastRunningStartRef.current.delete(segmentIndex);
-      previousIsRunningRef.current.delete(segmentIndex);
       setIsLoggingError(false);
       setLoggingErrorMessage('');
 
@@ -372,35 +358,9 @@ export function PomodoroTimer({
   };
 
   const handleStateChange = (state: PomodoroTimerState) => {
-    // Track running time for work segments
-    const currentSegmentIndex = state.currentIndex;
-    const currentSegment = segments[currentSegmentIndex];
-    
-    if (currentSegment?.type === 'work') {
-      const previousIsRunning = previousIsRunningRef.current.get(currentSegmentIndex) ?? false;
-      const lastRunningStart = segmentLastRunningStartRef.current.get(currentSegmentIndex);
-      const accumulatedTime = segmentRunningTimeRef.current.get(currentSegmentIndex) || 0;
-      
-      // Detect transition from paused to running
-      if (state.isRunning && !previousIsRunning) {
-        // Timer just started/resumed running - record the start time
-        segmentLastRunningStartRef.current.set(currentSegmentIndex, new Date());
-      }
-      
-      // Detect transition from running to paused
-      if (!state.isRunning && previousIsRunning && lastRunningStart !== null && lastRunningStart !== undefined) {
-        // Timer just paused - accumulate the running time
-        const now = new Date();
-        const runningDuration = Math.floor((now.getTime() - lastRunningStart.getTime()) / 1000);
-        segmentRunningTimeRef.current.set(currentSegmentIndex, accumulatedTime + runningDuration);
-        segmentLastRunningStartRef.current.set(currentSegmentIndex, null);
-      }
-      
-      // Update previous state
-      previousIsRunningRef.current.set(currentSegmentIndex, state.isRunning);
-    }
-
     // Save state to localStorage for persistence
+    const currentSegment = segments[state.currentIndex];
+    
     if (!currentSegment) return;
 
     // Only save if not finished

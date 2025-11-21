@@ -21,6 +21,7 @@ import {
   type PersistedSessionState,
 } from '@/lib/focus/sessionPersistence';
 import { GlassCard, Button } from '@/components/ui';
+import { useDocumentTitle } from '@/lib/hooks/useDocumentTitle';
 import type { FocusSegment } from '@/lib/types/focusPlan';
 import type { UserPreferences } from '@/lib/firestore/userPreferences';
 import type { PomodoroTimerState } from '@/lib/focus/usePomodoroTimer';
@@ -521,6 +522,15 @@ function TimerDisplay({
     ...initialTimerOptions,
   });
 
+  const currentSegment = segments[state.currentIndex];
+  
+  // Update document title with countdown when timer is running
+  useDocumentTitle({
+    isRunning: state.isRunning,
+    secondsRemaining: state.secondsRemaining,
+    segmentType: currentSegment?.type || 'work',
+  });
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -595,7 +605,6 @@ function TimerDisplay({
     .reduce((sum, seg) => sum + seg.minutes, 0);
 
   const progressPercentage = (completedWorkMinutes / totalWorkMinutes) * 100;
-  const currentSegment = segments[state.currentIndex];
   const isWorkSegment = currentSegment?.type === 'work';
 
   return (

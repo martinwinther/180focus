@@ -44,7 +44,7 @@ The app emphasizes gentle progression and clarity. The interface uses a calm, gl
 - **Frontend:** Next.js 15 with App Router, TypeScript, Tailwind CSS
 - **Backend:** Firebase Authentication + Firestore
 - **Deployment:** Vercel
-- **Live URL:** https://focus180.app
+- **Live URL:** https://180focus.app
 
 ## Getting Started
 
@@ -89,7 +89,7 @@ npm run build
 
 ### Deploy to Vercel
 
-The app is deployed on [Vercel](https://vercel.com) at https://focus180.app
+The app is deployed on [Vercel](https://vercel.com) at https://180focus.app
 
 To deploy:
 1. Push your code to GitHub
@@ -147,7 +147,7 @@ Core features complete:
 ## Branding
 
 - **Product Name:** Focus 180
-- **Canonical URL:** https://focus180.app
+- **Canonical URL:** https://180focus.app
 - **Tagline:** Couch to 3 hours of deep work.
 
 ## License

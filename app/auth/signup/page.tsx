@@ -35,12 +35,12 @@ export default function SignUpPage() {
       );
 
       // Configure email verification with continue URL
-      // Note: focus180.app must be listed under
+      // Note: 180focus.app must be listed under
       // Firebase → Authentication → Settings → Authorized domains
       // Redirects directly to sign-in after Firebase's verification page
       // Add verified=true param so we can show a success message
       const actionCodeSettings = {
-        url: 'https://focus180.app/auth/signin?verified=true',
+        url: 'https://180focus.app/auth/signin?verified=true',
         handleCodeInApp: false,
       };
 

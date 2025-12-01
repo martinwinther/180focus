@@ -528,7 +528,7 @@ function TimerDisplay({
   const lastRemoteUpdateRef = useRef<number>(0);
   const segmentStartTimeRef = useRef<Date | null>(null);
   const accumulatedSecondsRef = useRef<number>(0);
-  const lastSyncedSegmentIndexRef = useRef<number>(state.currentIndex);
+  const lastSyncedSegmentIndexRef = useRef<number>(initialTimerOptions.initialSegmentIndex);
 
   const { state, controls } = usePomodoroTimer({
     segments,

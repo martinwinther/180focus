@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
-import ClientMonitoring from '@/components/ClientMonitoring';
 import { APP_NAME, APP_DESCRIPTION, APP_CANONICAL_URL } from '@/lib/config/appConfig';
 
 const inter = Inter({
@@ -52,8 +51,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans">
-        {/* Client-side monitoring initialization */}
-        <ClientMonitoring />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

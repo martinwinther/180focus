@@ -1,0 +1,19 @@
+{
+  "name": "180 Focus",
+  "short_name": "180 Focus",
+  "description": "Gradually build your focus capacity with guided Pomodoro training",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

@@ -16,6 +16,12 @@ export const metadata: Metadata = {
   description: APP_DESCRIPTION,
   keywords: ['focus', 'pomodoro', 'productivity', 'deep work', 'training', 'focus training', 'attention', 'concentration'],
   authors: [{ name: APP_NAME }],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: '180 Focus',
+  },
   openGraph: {
     title: `${APP_NAME} – ${APP_DESCRIPTION.split('.')[0]}`,
     description: APP_DESCRIPTION,

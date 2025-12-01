@@ -53,22 +53,48 @@ export function usePomodoroTimer(
   } = options;
 
   const [currentIndex, setCurrentIndex] = useState(initialSegmentIndex);
-  const [secondsRemaining, setSecondsRemaining] = useState(
-    initialSecondsRemaining !== undefined
-      ? initialSecondsRemaining
-      : segments.length > 0
-      ? segments[initialSegmentIndex]?.minutes * 60 || 0
-      : 0
-  );
+  const initialSeconds = initialSecondsRemaining !== undefined
+    ? initialSecondsRemaining
+    : segments.length > 0
+    ? segments[initialSegmentIndex]?.minutes * 60 || 0
+    : 0;
+  const [secondsRemaining, setSecondsRemaining] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(initialIsRunning);
   const [isFinished, setIsFinished] = useState(false);
   const [completedSegments, setCompletedSegments] = useState<number[]>([]);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const segmentStartTimeRef = useRef<Date | null>(null);
+  const segmentPlannedSecondsRef = useRef<number>(initialSeconds);
+  const accumulatedSecondsRef = useRef<number>(0);
   const isExternalUpdateRef = useRef(false);
 
   const currentSegment = segments[currentIndex] || null;
+
+  // Initialize refs with initial values
+  useEffect(() => {
+    segmentPlannedSecondsRef.current = initialSeconds;
+    if (initialIsRunning) {
+      segmentStartTimeRef.current = new Date();
+    }
+  }, []); // Only on mount
+
+  // Calculate remaining seconds from timestamp (works even when device sleeps)
+  const calculateRemainingFromTimestamp = useCallback((): number => {
+    const planned = segmentPlannedSecondsRef.current;
+    const accumulated = accumulatedSecondsRef.current;
+    
+    if (!segmentStartTimeRef.current || !isRunning) {
+      // If paused or not started, return remaining based on accumulated time
+      return Math.max(0, planned - accumulated);
+    }
+
+    // If running, calculate elapsed since current start and subtract from remaining
+    const now = Date.now();
+    const elapsedSinceCurrentStart = Math.floor((now - segmentStartTimeRef.current.getTime()) / 1000);
+    const remaining = Math.max(0, planned - accumulated - elapsedSinceCurrentStart);
+    return remaining;
+  }, [isRunning]);
 
   // Expose update function for external state sync (e.g., Firestore)
   useEffect(() => {
@@ -135,17 +161,19 @@ export function usePomodoroTimer(
     }
   }, [currentIndex, secondsRemaining, isRunning, isFinished, completedSegments, currentSegment, onStateChange]);
 
-  // Handle timer tick
+  // Handle timer tick - use timestamp-based calculation (works when device sleeps)
   useEffect(() => {
-    if (isRunning && secondsRemaining > 0) {
+    if (isRunning && segmentStartTimeRef.current) {
+      // Calculate initial remaining time
+      const initialRemaining = calculateRemainingFromTimestamp();
+      if (initialRemaining !== secondsRemaining) {
+        setSecondsRemaining(initialRemaining);
+      }
+
+      // Update every second by recalculating from timestamp
       intervalRef.current = setInterval(() => {
-        setSecondsRemaining((prev) => {
-          if (prev <= 1) {
-            // Segment completed
-            return 0;
-          }
-          return prev - 1;
-        });
+        const remaining = calculateRemainingFromTimestamp();
+        setSecondsRemaining(remaining);
       }, 1000);
     } else {
       if (intervalRef.current) {
@@ -160,7 +188,7 @@ export function usePomodoroTimer(
         intervalRef.current = null;
       }
     };
-  }, [isRunning, secondsRemaining]);
+  }, [isRunning, calculateRemainingFromTimestamp, secondsRemaining]);
 
   // Handle segment completion and auto-advance
   useEffect(() => {
@@ -183,12 +211,15 @@ export function usePomodoroTimer(
         const nextSegment = segments[nextIndex];
         
         setCurrentIndex(nextIndex);
-        setSecondsRemaining(nextSegment.minutes * 60);
+        const nextPlannedSeconds = nextSegment.minutes * 60;
+        setSecondsRemaining(nextPlannedSeconds);
         
         // Auto-start the next segment if it's a work segment or a break
         // For now, auto-start all segments for smooth UX
-        setIsRunning(true);
+        segmentPlannedSecondsRef.current = nextPlannedSeconds;
         segmentStartTimeRef.current = new Date();
+        accumulatedSecondsRef.current = 0;
+        setIsRunning(true);
         
         // Notify if starting a work segment
         if (nextSegment.type === 'work' && onWorkSegmentStart) {
@@ -205,32 +236,58 @@ export function usePomodoroTimer(
   const start = useCallback(() => {
     if (isFinished) return;
     
-    setIsRunning(true);
+    const plannedSeconds = currentSegment?.minutes * 60 || segments[currentIndex]?.minutes * 60 || 0;
+    segmentPlannedSecondsRef.current = plannedSeconds;
     segmentStartTimeRef.current = new Date();
+    accumulatedSecondsRef.current = 0;
+    setIsRunning(true);
+    
+    // Set initial remaining time
+    setSecondsRemaining(plannedSeconds);
     
     // Notify if starting a work segment
     if (currentSegment?.type === 'work' && onWorkSegmentStart) {
       onWorkSegmentStart(currentIndex, currentSegment);
     }
-  }, [isFinished, currentSegment, currentIndex, onWorkSegmentStart]);
+  }, [isFinished, currentSegment, currentIndex, segments, onWorkSegmentStart]);
 
   const pause = useCallback(() => {
+    if (segmentStartTimeRef.current && isRunning) {
+      // Calculate accumulated time before pausing
+      const elapsed = Math.floor(
+        (Date.now() - segmentStartTimeRef.current.getTime()) / 1000
+      );
+      accumulatedSecondsRef.current += elapsed;
+      segmentStartTimeRef.current = null;
+    }
     setIsRunning(false);
-  }, []);
+  }, [isRunning]);
 
   const resume = useCallback(() => {
     if (!isFinished) {
-      setIsRunning(true);
+      const remaining = segmentPlannedSecondsRef.current - accumulatedSecondsRef.current;
+      if (remaining > 0) {
+        // Start a new timer run from the remaining time
+        segmentStartTimeRef.current = new Date();
+        setIsRunning(true);
+        setSecondsRemaining(remaining);
+      } else {
+        // Time already expired
+        setSecondsRemaining(0);
+      }
     }
   }, [isFinished]);
 
   const reset = useCallback(() => {
     setCurrentIndex(0);
-    setSecondsRemaining(segments.length > 0 ? segments[0].minutes * 60 : 0);
+    const initialSeconds = segments.length > 0 ? segments[0].minutes * 60 : 0;
+    setSecondsRemaining(initialSeconds);
     setIsRunning(false);
     setIsFinished(false);
     setCompletedSegments([]);
     segmentStartTimeRef.current = null;
+    segmentPlannedSecondsRef.current = initialSeconds;
+    accumulatedSecondsRef.current = 0;
     
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -253,8 +310,11 @@ export function usePomodoroTimer(
       const nextSegment = segments[nextIndex];
       
       setCurrentIndex(nextIndex);
-      setSecondsRemaining(nextSegment.minutes * 60);
+      const nextPlannedSeconds = nextSegment.minutes * 60;
+      setSecondsRemaining(nextPlannedSeconds);
+      segmentPlannedSecondsRef.current = nextPlannedSeconds;
       segmentStartTimeRef.current = new Date();
+      accumulatedSecondsRef.current = 0;
       
       // Keep running state if timer was running
       if (isRunning && nextSegment.type === 'work' && onWorkSegmentStart) {
@@ -271,10 +331,13 @@ export function usePomodoroTimer(
       if (index < 0 || index >= segments.length) return;
 
       setCurrentIndex(index);
-      setSecondsRemaining(segments[index].minutes * 60);
+      const plannedSeconds = segments[index].minutes * 60;
+      setSecondsRemaining(plannedSeconds);
       setIsRunning(false);
       setIsFinished(false);
       segmentStartTimeRef.current = null;
+      segmentPlannedSecondsRef.current = plannedSeconds;
+      accumulatedSecondsRef.current = 0;
       
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { logger } from '@/lib/utils/logger';
 import { usePomodoroTimer } from '@/lib/focus/usePomodoroTimer';
 import { logCompletedWorkSegment, getSessionLogsForDay } from '@/lib/firestore/sessionLogs';
@@ -998,9 +999,11 @@ function TimerDisplay({
             <p className="mb-6 text-lg text-white/70">
               Great work today. You completed {totalWorkMinutes} minutes of focused work.
             </p>
-            <button onClick={syncedControls.reset} className="btn-secondary transition-all duration-150 hover:scale-105">
-              Review sessions
-            </button>
+            <Link href="/history">
+              <Button variant="secondary" className="transition-all duration-150 hover:scale-105">
+                Review sessions
+              </Button>
+            </Link>
           </div>
         )}
 

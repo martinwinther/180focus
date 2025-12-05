@@ -422,17 +422,15 @@ export default function TodayPage() {
         refreshKey={progressKey}
       />
 
-      {!isTodayComplete && (
-        <PomodoroTimer
-          userId={user!.uid}
-          planId={plan.id!}
-          dayId={todayDay.id!}
-          segments={todayDay.segments}
-          dailyTargetMinutes={todayDay.dailyTargetMinutes}
-          dayIndex={todayDay.index}
-          date={todayDay.date}
-        />
-      )}
+      <PomodoroTimer
+        userId={user!.uid}
+        planId={plan.id!}
+        dayId={todayDay.id!}
+        segments={todayDay.segments}
+        dailyTargetMinutes={todayDay.dailyTargetMinutes}
+        dayIndex={todayDay.index}
+        date={todayDay.date}
+      />
     </div>
   );
 }

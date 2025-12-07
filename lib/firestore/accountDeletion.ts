@@ -158,4 +158,3 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     );
   }
 }
-

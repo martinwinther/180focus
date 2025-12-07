@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { canUseNotifications, requestNotificationPermission } from '@/lib/focus/notifications';
 import {
@@ -12,6 +13,7 @@ import {
 import { getAllFocusDaysForPlan } from '@/lib/firestore/focusDays';
 import { getUserPreferences, updateUserPreferences } from '@/lib/firestore/userPreferences';
 import { updateTrainingDaysPerWeekForFuture } from '@/lib/focus/planAdjustments';
+import { deleteUserAccount, AccountDeletionError } from '@/lib/firestore/accountDeletion';
 import { GlassCard, LoadingSpinner, Button, Toggle } from '@/components/ui';
 import type { FocusPlan } from '@/lib/types/focusPlan';
 import type { UserPreferences } from '@/lib/firestore/userPreferences';
@@ -20,6 +22,7 @@ import type { TrainingDayOfWeek } from '@/lib/focus/ramp';
 const ALL_DAYS: TrainingDayOfWeek[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const [plan, setPlan] = useState<FocusPlan | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
@@ -33,6 +36,9 @@ export default function SettingsPage() {
   const [dayCount, setDayCount] = useState<{ completed: number; total: number } | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [notificationsSupported, setNotificationsSupported] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string>('');
 
   useEffect(() => {
     // Check notification support
@@ -201,6 +207,26 @@ export default function SettingsPage() {
     const currentDays = [...plan.trainingDaysPerWeek].sort();
     const newDays = [...selectedTrainingDays].sort();
     return currentDays.join(',') !== newDays.join(',');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    setDeletingAccount(true);
+    setDeleteError('');
+
+    try {
+      await deleteUserAccount(user.uid);
+      // Account deleted successfully - redirect to home
+      router.push('/');
+    } catch (err) {
+      if (err instanceof AccountDeletionError) {
+        setDeleteError(err.message);
+      } else {
+        setDeleteError('Failed to delete your account. Please try again.');
+      }
+      setDeletingAccount(false);
+    }
   };
 
   if (loading) {
@@ -489,6 +515,62 @@ export default function SettingsPage() {
           >
             Sign out
           </button>
+        </div>
+      </GlassCard>
+
+      <GlassCard className="border-red-500/30">
+        <h2 className="mb-4 text-xl font-semibold text-red-300">Danger Zone</h2>
+
+        <div className="space-y-4">
+          <div className="rounded-xl bg-red-500/10 p-4">
+            <h3 className="mb-2 font-medium text-white">Delete Account</h3>
+            <p className="mb-4 text-sm text-white/70">
+              Permanently delete your account and all associated data. This action cannot be undone.
+              All your focus plans, progress, and session logs will be permanently removed.
+            </p>
+
+            {deleteError && (
+              <div className="mb-4 rounded-lg bg-red-500/20 px-4 py-3 text-sm text-red-200">
+                {deleteError}
+              </div>
+            )}
+
+            {!showDeleteConfirm ? (
+              <Button
+                variant="secondary"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full border-red-500/50 text-red-300 hover:bg-red-500/20"
+              >
+                Delete account
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-white">
+                  Are you sure? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleDeleteAccount}
+                    disabled={deletingAccount}
+                    className="flex-1 border-red-500/50 bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                  >
+                    {deletingAccount ? 'Deleting...' : 'Yes, delete my account'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteError('');
+                    }}
+                    disabled={deletingAccount}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </GlassCard>
     </div>

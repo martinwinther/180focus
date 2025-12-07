@@ -26,6 +26,18 @@ export function Footer() {
               >
                 Privacy
               </Link>
+              <Link 
+                href="/terms" 
+                className="text-sm text-white/60 transition-colors hover:text-white/90"
+              >
+                Terms
+              </Link>
+              <a 
+                href="mailto:hello@180focus.app" 
+                className="text-sm text-white/60 transition-colors hover:text-white/90"
+              >
+                Contact
+              </a>
             </nav>
           </div>
 

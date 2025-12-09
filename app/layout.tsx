@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
@@ -53,6 +54,8 @@ export const metadata: Metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: '#667eea',
 };
 
@@ -64,6 +67,29 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans">
+        <Script
+          id="viewport-fit-fix"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport) {
+                  var content = viewport.getAttribute('content') || '';
+                  if (!content.includes('viewport-fit=cover')) {
+                    var newContent = content ? content + ', viewport-fit=cover' : 'width=device-width, initial-scale=1, viewport-fit=cover';
+                    viewport.setAttribute('content', newContent.replace(/,\s*,/g, ',').replace(/^,\s*/, ''));
+                  }
+                } else {
+                  var meta = document.createElement('meta');
+                  meta.name = 'viewport';
+                  meta.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
+                  document.head.appendChild(meta);
+                }
+              })();
+            `,
+          }}
+        />
         <ViewportMeta />
         <AuthProvider>{children}</AuthProvider>
       </body>

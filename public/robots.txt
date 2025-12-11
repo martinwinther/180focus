@@ -1,0 +1,31 @@
+# robots.txt for 180 Focus
+# https://180focus.app/robots.txt
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+
+# Disallow authentication pages (not useful for search engines)
+Disallow: /auth/
+Disallow: /auth/signin
+Disallow: /auth/signup
+Disallow: /auth/email-verified
+
+# Disallow onboarding (requires authentication)
+Disallow: /onboarding
+
+# Disallow app pages (require authentication)
+Disallow: /today
+Disallow: /history
+Disallow: /settings
+Disallow: /plans
+
+# Disallow API routes
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://180focus.app/sitemap.xml
+

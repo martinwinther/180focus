@@ -5,7 +5,7 @@ import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
 import { ViewportMeta } from '@/components/ViewportMeta';
 import { StatusBarOverlay } from '@/components/StatusBarOverlay';
-import { APP_NAME, APP_DESCRIPTION, APP_CANONICAL_URL } from '@/lib/config/appConfig';
+import { APP_NAME, APP_DESCRIPTION, APP_CANONICAL_URL, APP_TAGLINE } from '@/lib/config/appConfig';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -43,11 +43,20 @@ export const metadata: Metadata = {
     locale: 'en_US',
     siteName: APP_NAME,
     url: APP_CANONICAL_URL,
+    images: [
+      {
+        url: `${APP_CANONICAL_URL}/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: `${APP_NAME} - ${APP_TAGLINE}`,
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: `${APP_NAME} – ${APP_DESCRIPTION.split('.')[0]}`,
     description: APP_DESCRIPTION,
+    images: [`${APP_CANONICAL_URL}/og-image.png`],
   },
   metadataBase: new URL(APP_CANONICAL_URL),
 };

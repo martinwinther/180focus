@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -11,7 +12,7 @@ const nextConfig: NextConfig = {
       "font-src 'self' data:",
       "media-src 'self' data:",
       "worker-src 'self' blob:",
-      "connect-src 'self' https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com",
+      "connect-src 'self' https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.sentry.io https://*.ingest.sentry.io",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'"
@@ -47,4 +48,29 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default nextConfig;
+// Sentry configuration options
+const sentryWebpackPluginOptions = {
+  // Suppresses source map uploading logs during build
+  silent: true,
+  
+  // For all available options, see:
+  // https://github.com/getsentry/sentry-webpack-plugin#options
+
+  // Sentry org and project from environment variables
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Auth token for source map uploads (optional)
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Upload source maps only when auth token is available
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+  
+  // Disable Sentry's telemetry
+  telemetry: false,
+};
+
+// Wrap the config with Sentry
+export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);

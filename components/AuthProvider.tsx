@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User } from 'firebase/auth';
+import * as Sentry from '@sentry/nextjs';
 
 interface AuthContextType {
   user: User | null;
@@ -42,14 +43,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);
+
+            // Set Sentry user context
+            if (user) {
+              Sentry.setUser({
+                id: user.uid,
+                email: user.email || undefined,
+              });
+            } else {
+              // Clear Sentry user context on sign out
+              Sentry.setUser(null);
+            }
           });
         } catch (error) {
           console.error('Error initializing Firebase Auth:', error);
+          Sentry.captureException(error);
           setLoading(false);
         }
       })
       .catch((error) => {
         console.error('Error loading Firebase modules:', error);
+        Sentry.captureException(error);
         setLoading(false);
       });
 
@@ -68,8 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       const auth = await getFirebaseAuth();
       await firebaseSignOut(auth);
+      // Clear Sentry user context
+      Sentry.setUser(null);
     } catch (error) {
       console.error('Error signing out:', error);
+      Sentry.captureException(error);
     }
   };
 
@@ -89,4 +106,3 @@ export function useAuth() {
   }
   return context;
 }
-

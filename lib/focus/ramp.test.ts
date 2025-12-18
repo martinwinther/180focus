@@ -74,17 +74,26 @@ function testShortDays(): void {
 function testTwoSegmentDays(): void {
   console.log('Testing two-segment days...');
   
-  // 29 minutes: 15 / 5 / 14
+  // 29 minutes: 25 / 5 / 4 (can't reach 15 for second block)
+  // Wait, 29 needs 2 segments. 25 + 4 = 29, but 4 < 15.
+  // With our algorithm: shortfall = 50 - 29 = 21
+  // First pass: reduce last to 15 (10 reduced), then first to 15 (10 reduced) = 20 total
+  // Second pass: reduce last by 1 = 14
+  // Result: 15 / 5 / 14
   const segments29 = buildPomodoroSegmentsForDay(29);
   assertSegmentsMatch(segments29, '15 / 5 / 14', 29);
   
-  // 32 minutes: 16 / 5 / 16
+  // 32 minutes: shortfall = 50 - 32 = 18
+  // Reduce last to 15 (10), reduce first to 17 (8) = 18 total
+  // Result: 17 / 5 / 15
   const segments32 = buildPomodoroSegmentsForDay(32);
-  assertSegmentsMatch(segments32, '16 / 5 / 16', 32);
+  assertSegmentsMatch(segments32, '17 / 5 / 15', 32);
   
-  // 45 minutes: 23 / 5 / 22
+  // 45 minutes: shortfall = 50 - 45 = 5
+  // Reduce last by 5 → 20
+  // Result: 25 / 5 / 20
   const segments45 = buildPomodoroSegmentsForDay(45);
-  assertSegmentsMatch(segments45, '23 / 5 / 22', 45);
+  assertSegmentsMatch(segments45, '25 / 5 / 20', 45);
   
   console.log('✓ Two-segment days passed');
 }
@@ -92,13 +101,17 @@ function testTwoSegmentDays(): void {
 function testThreeSegmentDays(): void {
   console.log('Testing three-segment days...');
   
-  // 52 minutes: 18 / 5 / 17 / 5 / 17
+  // 52 minutes: shortfall = 75 - 52 = 23
+  // Reduce 3rd to 15 (10), 2nd to 15 (10), 1st to 22 (3) = 23 total
+  // Result: 22 / 5 / 15 / 5 / 15
   const segments52 = buildPomodoroSegmentsForDay(52);
-  assertSegmentsMatch(segments52, '18 / 5 / 17 / 5 / 17', 52);
+  assertSegmentsMatch(segments52, '22 / 5 / 15 / 5 / 15', 52);
   
-  // 60 minutes: 20 / 5 / 20 / 5 / 20
+  // 60 minutes: shortfall = 75 - 60 = 15
+  // Reduce 3rd to 15 (10), 2nd to 20 (5) = 15 total
+  // Result: 25 / 5 / 20 / 5 / 15
   const segments60 = buildPomodoroSegmentsForDay(60);
-  assertSegmentsMatch(segments60, '20 / 5 / 20 / 5 / 20', 60);
+  assertSegmentsMatch(segments60, '25 / 5 / 20 / 5 / 15', 60);
   
   console.log('✓ Three-segment days passed');
 }
@@ -106,13 +119,23 @@ function testThreeSegmentDays(): void {
 function testLargerDays(): void {
   console.log('Testing larger days...');
   
-  // 76 minutes: 19 / 5 / 19 / 5 / 19 / 5 / 19
+  // 76 minutes: 4 segments, shortfall = 100 - 76 = 24
+  // Reduce 4th to 15 (10), 3rd to 15 (10), 2nd to 21 (4) = 24 total
+  // Result: 25 / 5 / 21 / 5 / 15 / 5 / 15
   const segments76 = buildPomodoroSegmentsForDay(76);
-  assertSegmentsMatch(segments76, '19 / 5 / 19 / 5 / 19 / 5 / 19', 76);
+  assertSegmentsMatch(segments76, '25 / 5 / 21 / 5 / 15 / 5 / 15', 76);
   
-  // 104 minutes: 21 / 5 / 21 / 5 / 21 / 5 / 21 / 5 / 20
+  // 104 minutes: 5 segments, shortfall = 125 - 104 = 21
+  // Reduce 5th to 15 (10), 4th to 15 (10), 3rd to 24 (1) = 21 total
+  // Result: 25 / 5 / 25 / 5 / 24 / 5 / 15 / 5 / 15
   const segments104 = buildPomodoroSegmentsForDay(104);
-  assertSegmentsMatch(segments104, '21 / 5 / 21 / 5 / 21 / 5 / 21 / 5 / 20', 104);
+  assertSegmentsMatch(segments104, '25 / 5 / 25 / 5 / 24 / 5 / 15 / 5 / 15', 104);
+  
+  // 180 minutes: 8 segments, shortfall = 200 - 180 = 20
+  // Reduce 8th to 15 (10), 7th to 15 (10) = 20 total
+  // Result: 25 / 5 / 25 / 5 / 25 / 5 / 25 / 5 / 25 / 5 / 25 / 5 / 15 / 5 / 15
+  const segments180 = buildPomodoroSegmentsForDay(180);
+  assertSegmentsMatch(segments180, '25 / 5 / 25 / 5 / 25 / 5 / 25 / 5 / 25 / 5 / 25 / 5 / 15 / 5 / 15', 180);
   
   console.log('✓ Larger days passed');
 }

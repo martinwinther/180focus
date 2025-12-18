@@ -172,38 +172,58 @@ export function generateDailyTargets(
 /**
  * Builds a Pomodoro-style segment plan for a given daily target.
  * Rules:
- * - Work sessions are ≤ 25 minutes
+ * - Work sessions are ideally 25 minutes and NEVER above 25 minutes
+ * - Work sessions should ideally be at least 15 minutes (unless total time is too small)
+ * - Only the last 1-2 sessions should be less than 25 minutes
  * - Standard break between work sessions is 5 minutes
  * - If totalMinutes < 20: no breaks, just work segments
- * - If totalMinutes ≥ 20: split into evenly distributed work segments with 5-min breaks between them
- * - Avoids tiny tail segments by distributing minutes evenly across all segments
  */
 export function buildPomodoroSegmentsForDay(totalMinutes: number): FocusSegment[] {
   const MAX_SEGMENT_MIN = 25;
+  const MIN_SEGMENT_MIN = 15;
   const BREAK_MIN = 5;
+  
+  // Edge case: no time
+  if (totalMinutes <= 0) {
+    return [];
+  }
   
   // Short days: no breaks, single work segment
   if (totalMinutes < 20) {
     return [{ type: 'work', minutes: totalMinutes }];
   }
   
-  // Longer days: distribute evenly across N segments (each ≤ 25 minutes)
-  const N = Math.max(1, Math.ceil(totalMinutes / MAX_SEGMENT_MIN));
-  const base = Math.floor(totalMinutes / N);
-  const remainder = totalMinutes % N;
+  // Calculate number of segments needed (each must be ≤ 25 minutes)
+  const segmentCount = Math.ceil(totalMinutes / MAX_SEGMENT_MIN);
   
-  // Build work segment lengths: first 'remainder' segments get base + 1, rest get base
-  const workSegmentMinutes: number[] = [];
-  for (let i = 0; i < N; i++) {
-    workSegmentMinutes.push(i < remainder ? base + 1 : base);
+  // Start with all 25-minute segments
+  const workSegmentMinutes: number[] = Array(segmentCount).fill(MAX_SEGMENT_MIN);
+  
+  // Calculate how much we need to reduce to match total
+  let shortfall = segmentCount * MAX_SEGMENT_MIN - totalMinutes;
+  
+  // First pass: reduce from end, keeping segments at MIN_SEGMENT_MIN (15 min)
+  for (let i = segmentCount - 1; i >= 0 && shortfall > 0; i--) {
+    const maxReduction = workSegmentMinutes[i] - MIN_SEGMENT_MIN;
+    const reduction = Math.min(maxReduction, shortfall);
+    workSegmentMinutes[i] -= reduction;
+    shortfall -= reduction;
+  }
+  
+  // Second pass: if still shortfall, go below 15 minutes (necessary for small totals)
+  for (let i = segmentCount - 1; i >= 0 && shortfall > 0; i--) {
+    const maxReduction = workSegmentMinutes[i] - 1; // Keep at least 1 minute
+    const reduction = Math.min(maxReduction, shortfall);
+    workSegmentMinutes[i] -= reduction;
+    shortfall -= reduction;
   }
   
   // Build segments array: work segments with breaks between them
   const segments: FocusSegment[] = [];
-  for (let i = 0; i < N; i++) {
+  for (let i = 0; i < segmentCount; i++) {
     segments.push({ type: 'work', minutes: workSegmentMinutes[i] });
     // Add break between work segments (not after the last one)
-    if (i < N - 1) {
+    if (i < segmentCount - 1) {
       segments.push({ type: 'break', minutes: BREAK_MIN });
     }
   }
